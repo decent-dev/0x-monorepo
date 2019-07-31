@@ -56,7 +56,6 @@
         "ethereum-types": "^2.1.4",
         "ethereumjs-util": "^5.1.1",
         "find-versions": "^2.0.0",
-        "highlightjs-solidity": "^1.0.6",
         "is-mobile": "^0.2.2",
         "valid-url": "^1.0.9",
         "jsonschema": "^1.2.0",
