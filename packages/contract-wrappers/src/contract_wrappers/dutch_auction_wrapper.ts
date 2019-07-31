@@ -2,26 +2,23 @@ import { DutchAuctionContract } from '@0x/abi-gen-wrappers';
 import { DutchAuction } from '@0x/contract-artifacts';
 import { schemas } from '@0x/json-schemas';
 import { assetDataUtils } from '@0x/order-utils';
-import { DutchAuctionDetails, SignedOrder } from '@0x/types';
+import { DutchAuctionData, DutchAuctionDetails, SignedOrder } from '@0x/types';
 import { BigNumber } from '@0x/utils';
 import { Web3Wrapper } from '@0x/web3-wrapper';
 import { ContractAbi } from 'ethereum-types';
-import * as ethAbi from 'ethereumjs-abi';
-import * as ethUtil from 'ethereumjs-util';
 import * as _ from 'lodash';
 
 import { orderTxOptsSchema } from '../schemas/order_tx_opts_schema';
 import { txOptsSchema } from '../schemas/tx_opts_schema';
-import { DutchAuctionData, DutchAuctionWrapperError, OrderTransactionOpts } from '../types';
+import { DutchAuctionWrapperError, OrderTransactionOpts } from '../types';
 import { assert } from '../utils/assert';
 import { _getDefaultContractAddresses } from '../utils/contract_addresses';
 
-import { ContractWrapper } from './contract_wrapper';
-
-export class DutchAuctionWrapper extends ContractWrapper {
+export class DutchAuctionWrapper {
     public abi: ContractAbi = DutchAuction.compilerOutput.abi;
     public address: string;
-    private _dutchAuctionContractIfExists?: DutchAuctionContract;
+    private readonly _web3Wrapper: Web3Wrapper;
+    private readonly _dutchAuctionContract: DutchAuctionContract;
     /**
      * Dutch auction details are encoded with the asset data for a 0x order. This function produces a hex
      * encoded assetData string, containing information both about the asset being traded and the
@@ -36,14 +33,7 @@ export class DutchAuctionWrapper extends ContractWrapper {
         beginTimeSeconds: BigNumber,
         beginAmount: BigNumber,
     ): string {
-        const assetDataBuffer = ethUtil.toBuffer(assetData);
-        const abiEncodedAuctionData = (ethAbi as any).rawEncode(
-            ['uint256', 'uint256'],
-            [beginTimeSeconds.toString(), beginAmount.toString()],
-        );
-        const abiEncodedAuctionDataBuffer = ethUtil.toBuffer(abiEncodedAuctionData);
-        const dutchAuctionDataBuffer = Buffer.concat([assetDataBuffer, abiEncodedAuctionDataBuffer]);
-        const dutchAuctionData = ethUtil.bufferToHex(dutchAuctionDataBuffer);
+        const dutchAuctionData = assetDataUtils.encodeDutchAuctionAssetData(assetData, beginTimeSeconds, beginAmount);
         return dutchAuctionData;
     }
     /**
@@ -54,30 +44,8 @@ export class DutchAuctionWrapper extends ContractWrapper {
      * @return An object containing the auction asset, auction begin time and auction begin amount.
      */
     public static decodeDutchAuctionData(dutchAuctionData: string): DutchAuctionData {
-        const dutchAuctionDataBuffer = ethUtil.toBuffer(dutchAuctionData);
-        // Decode asset data
-        const dutchAuctionDataLengthInBytes = 64;
-        const assetDataBuffer = dutchAuctionDataBuffer.slice(
-            0,
-            dutchAuctionDataBuffer.byteLength - dutchAuctionDataLengthInBytes,
-        );
-        const assetDataHex = ethUtil.bufferToHex(assetDataBuffer);
-        const assetData = assetDataUtils.decodeAssetDataOrThrow(assetDataHex);
-        // Decode auction details
-        const dutchAuctionDetailsBuffer = dutchAuctionDataBuffer.slice(
-            dutchAuctionDataBuffer.byteLength - dutchAuctionDataLengthInBytes,
-        );
-        const [beginTimeSecondsAsBN, beginAmountAsBN] = ethAbi.rawDecode(
-            ['uint256', 'uint256'],
-            dutchAuctionDetailsBuffer,
-        );
-        const beginTimeSeconds = new BigNumber(beginTimeSecondsAsBN.toString());
-        const beginAmount = new BigNumber(beginAmountAsBN.toString());
-        return {
-            assetData,
-            beginTimeSeconds,
-            beginAmount,
-        };
+        const decoded = assetDataUtils.decodeDutchAuctionData(dutchAuctionData);
+        return decoded;
     }
     /**
      * Instantiate DutchAuctionWrapper
@@ -87,8 +55,13 @@ export class DutchAuctionWrapper extends ContractWrapper {
      * default to the known address corresponding to the networkId.
      */
     public constructor(web3Wrapper: Web3Wrapper, networkId: number, address?: string) {
-        super(web3Wrapper, networkId);
         this.address = address === undefined ? _getDefaultContractAddresses(networkId).dutchAuction : address;
+        this._web3Wrapper = web3Wrapper;
+        this._dutchAuctionContract = new DutchAuctionContract(
+            this.address,
+            this._web3Wrapper.getProvider(),
+            this._web3Wrapper.getContractDefaults(),
+        );
     }
     /**
      * Matches the buy and sell orders at an amount given the following: the current block time, the auction
@@ -120,11 +93,9 @@ export class DutchAuctionWrapper extends ContractWrapper {
         ) {
             throw new Error(DutchAuctionWrapperError.AssetDataMismatch);
         }
-        // get contract
-        const dutchAuctionInstance = await this._getDutchAuctionContractAsync();
         // validate transaction
         if (orderTransactionOpts.shouldValidate) {
-            await dutchAuctionInstance.matchOrders.callAsync(
+            await this._dutchAuctionContract.matchOrders.callAsync(
                 buyOrder,
                 sellOrder,
                 buyOrder.signature,
@@ -138,7 +109,7 @@ export class DutchAuctionWrapper extends ContractWrapper {
             );
         }
         // send transaction
-        const txHash = await dutchAuctionInstance.matchOrders.sendTransactionAsync(
+        const txHash = await this._dutchAuctionContract.matchOrders.sendTransactionAsync(
             buyOrder,
             sellOrder,
             buyOrder.signature,
@@ -160,23 +131,8 @@ export class DutchAuctionWrapper extends ContractWrapper {
     public async getAuctionDetailsAsync(sellOrder: SignedOrder): Promise<DutchAuctionDetails> {
         // type assertions
         assert.doesConformToSchema('sellOrder', sellOrder, schemas.signedOrderSchema);
-        // get contract
-        const dutchAuctionInstance = await this._getDutchAuctionContractAsync();
         // call contract
-        const auctionDetails = await dutchAuctionInstance.getAuctionDetails.callAsync(sellOrder);
+        const auctionDetails = await this._dutchAuctionContract.getAuctionDetails.callAsync(sellOrder);
         return auctionDetails;
-    }
-    private async _getDutchAuctionContractAsync(): Promise<DutchAuctionContract> {
-        if (this._dutchAuctionContractIfExists !== undefined) {
-            return this._dutchAuctionContractIfExists;
-        }
-        const contractInstance = new DutchAuctionContract(
-            this.abi,
-            this.address,
-            this._web3Wrapper.getProvider(),
-            this._web3Wrapper.getContractDefaults(),
-        );
-        this._dutchAuctionContractIfExists = contractInstance;
-        return this._dutchAuctionContractIfExists;
     }
 }

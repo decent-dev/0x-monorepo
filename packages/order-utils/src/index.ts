@@ -44,12 +44,14 @@ export {
     OrderRelevantState,
     OrderState,
     ECSignature,
+    AssetData,
     SingleAssetData,
+    DutchAuctionData,
     ERC20AssetData,
     ERC721AssetData,
     ERC1155AssetData,
-    ERC1155AssetDataAbi,
     MultiAssetData,
+    StaticCallAssetData,
     MultiAssetDataWithRecursiveDecoding,
     AssetProxyId,
     SignatureType,
@@ -73,6 +75,10 @@ export {
     TransferType,
     FindFeeOrdersThatCoverFeesForTargetOrdersOpts,
     FindOrdersThatCoverMakerAssetFillAmountOpts,
+    FindOrdersThatCoverTakerAssetFillAmountOpts,
     FeeOrdersAndRemainingFeeAmount,
-    OrdersAndRemainingFillAmount,
+    OrdersAndRemainingTakerFillAmount,
+    OrdersAndRemainingMakerFillAmount,
 } from './types';
+
+export { ExchangeContract, NetworkId } from '@0x/abi-gen-wrappers';

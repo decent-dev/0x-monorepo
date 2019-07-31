@@ -131,6 +131,10 @@ export interface DataItem {
     components?: DataItem[];
 }
 
+export interface TupleDataItem extends DataItem {
+    components: DataItem[];
+}
+
 export enum OpCode {
     // 0s: Stop and Arithmetic Operations
     Stop = 'STOP',
@@ -612,12 +616,12 @@ export interface EvmBytecodeOutput {
 }
 
 export interface DevdocOutput {
-    title: string;
-    author: string;
+    title?: string;
+    author?: string;
     methods: {
         [signature: string]: {
-            details: string;
-            params: {
+            details?: string;
+            params?: {
                 [name: string]: ParamDescription;
             };
             return?: string;

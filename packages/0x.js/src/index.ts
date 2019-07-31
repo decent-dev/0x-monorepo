@@ -37,7 +37,6 @@ export {
     OrderAndTraderInfo,
     TraderInfo,
     ValidateOrderFillableOpts,
-    DutchAuctionData,
 } from '@0x/contract-wrappers';
 
 export {
@@ -85,6 +84,7 @@ export {
     ExchangeContractErrs,
     Order,
     SignedOrder,
+    DutchAuctionData,
     ECSignature,
     OrderStateValid,
     OrderStateInvalid,
@@ -95,9 +95,9 @@ export {
     ERC20AssetData,
     ERC721AssetData,
     ERC1155AssetData,
-    ERC1155AssetDataAbi,
     MultiAssetData,
     MultiAssetDataWithRecursiveDecoding,
+    StaticCallAssetData,
     SignatureType,
     ObjectMap,
     OrderRelevantState,
@@ -131,6 +131,7 @@ export {
     ConstructorAbi,
     FallbackAbi,
     DataItem,
+    TupleDataItem,
     ConstructorStateMutability,
     StateMutability,
     Web3JsProvider,

@@ -11,18 +11,18 @@ packages/website/  @BMillman19 @fragosti @fabioberger @steveklebanoff
 
 # Dev tools & setup
 .circleci/ @LogvinovLeon
-packages/abi-gen/ @LogvinovLeon
-packages/base-contract/ @LogvinovLeon
+packages/abi-gen/ @feuGeneA
+packages/base-contract/ @xianny
 packages/connect/ @fragosti 
-packages/abi-gen-templates/ @LogvinovLeon
+packages/abi-gen-templates/ @feuGeneA @xianny
 packages/contract-addresses/ @albrow
 packages/contract-artifacts/ @albrow
 packages/dev-utils/ @LogvinovLeon @fabioberger
 packages/devnet/ @albrow
 packages/ethereum-types/ @LogvinovLeon
-packages/metacoin/ @LogvinovLeon
 packages/monorepo-scripts/ @fabioberger
 packages/order-utils/ @fabioberger @LogvinovLeon 
+packages/python-contract-wrappers/ @feuGeneA
 packages/sol-compiler/ @LogvinovLeon
 packages/sol-coverage/ @LogvinovLeon
 packages/sol-profiler/ @LogvinovLeon
@@ -36,5 +36,4 @@ python-packages/ @feuGeneA
 packages/utils/ @hysz
 
 # Protocol/smart contracts
-contracts/core/test/ @albrow
 contracts/ @abandeali1 @hysz

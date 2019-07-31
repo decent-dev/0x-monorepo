@@ -1,12 +1,65 @@
 [
     {
+        "version": "2.4.0",
+        "changes": [
+            {
+                "note": "Updated interface to `deployFrom0xArtifactAsync` to include log decode dependencies.",
+                "pr": 1995
+            },
+            {
+                "note": "Updated interface to `deployAsync` to include log decode dependencies.",
+                "pr": 1995
+            }
+        ]
+    },
+    {
+        "version": "2.3.0",
+        "changes": [
+            {
+                "note": "Python: fix broken event handling",
+                "pr": 1919
+            },
+            {
+                "note": "Python: custom validator class support",
+                "pr": 1919
+            },
+            {
+                "note": "Python: linter fixes",
+                "pr": 1919
+            },
+            {
+                "note": "Python: normalize bytes parameters in wrapper methods",
+                "pr": 1919
+            }
+        ],
+        "timestamp": 1563957393
+    },
+    {
+        "timestamp": 1563006338,
+        "version": "2.2.1",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
         "version": "2.2.0",
         "changes": [
             {
                 "note": "add parameter assertions to methods",
                 "pr": 1823
+            },
+            {
+                "note": "Move `getABITransactionData` to `callAsync` template",
+                "pr": 1863
+            },
+            {
+                "note": "Initial support for Python",
+                "pr": 1878
             }
-        ]
+        ],
+        "timestamp": 1562967251
     },
     {
         "version": "2.1.0",

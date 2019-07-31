@@ -54,6 +54,35 @@ const MULTI_ASSET_METHOD_ABI: MethodAbi = {
     type: 'function',
 };
 
+const ERC1155_METHOD_ABI: MethodAbi = {
+    constant: false,
+    inputs: [
+        { name: 'tokenAddress', type: 'address' },
+        { name: 'tokenIds', type: 'uint256[]' },
+        { name: 'tokenValues', type: 'uint256[]' },
+        { name: 'callbackData', type: 'bytes' },
+    ],
+    name: 'ERC1155Assets',
+    outputs: [],
+    payable: false,
+    stateMutability: 'nonpayable',
+    type: 'function',
+};
+
+const STATIC_CALL_METHOD_ABI: MethodAbi = {
+    constant: false,
+    inputs: [
+        { name: 'callTarget', type: 'address' },
+        { name: 'staticCallData', type: 'bytes' },
+        { name: 'callResultHash', type: 'bytes32' },
+    ],
+    name: 'StaticCall',
+    outputs: [],
+    payable: false,
+    stateMutability: 'nonpayable',
+    type: 'function',
+};
+
 export const constants = {
     NULL_ADDRESS: '0x0000000000000000000000000000000000000000',
     NULL_BYTES: '0x',
@@ -62,10 +91,12 @@ export const constants = {
     UNLIMITED_ALLOWANCE_IN_BASE_UNITS: new BigNumber(2).pow(256).minus(1),
     TESTRPC_NETWORK_ID: 50,
     ADDRESS_LENGTH: 20,
-    ERC20_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 74,
-    ERC721_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 136,
-    MULTI_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 266,
-    SELECTOR_CHAR_LENGTH_WITH_PREFIX: 10,
+    ERC20_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 74, // 36 bytes
+    ERC721_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 138, // 68 bytes
+    ERC1155_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 266, // 132 bytes
+    MULTI_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 138, // 68 bytes
+    STATIC_CALL_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX: 202, // 100 bytes
+    SELECTOR_CHAR_LENGTH_WITH_PREFIX: 10, // 4 bytes
     INFINITE_TIMESTAMP_SEC: new BigNumber(2524604400), // Close to infinite
     ZERO_AMOUNT: new BigNumber(0),
     EXCHANGE_DOMAIN_NAME: '0x Protocol',
@@ -117,4 +148,6 @@ export const constants = {
     ERC20_METHOD_ABI,
     ERC721_METHOD_ABI,
     MULTI_ASSET_METHOD_ABI,
+    ERC1155_METHOD_ABI,
+    STATIC_CALL_METHOD_ABI,
 };

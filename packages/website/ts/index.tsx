@@ -29,6 +29,7 @@ import { Explore } from 'ts/pages/explore';
 import { NextEcosystem } from 'ts/pages/ecosystem';
 import { Extensions } from 'ts/pages/extensions';
 import { Governance } from 'ts/pages/governance/governance';
+import { VoteIndex } from 'ts/pages/governance/vote_index';
 import { Next0xInstant } from 'ts/pages/instant';
 import { NextLanding } from 'ts/pages/landing';
 import { NextLaunchKit } from 'ts/pages/launch_kit';
@@ -97,6 +98,9 @@ const LazyEthereumTypesDocumentation = createLazyComponent('Documentation', asyn
 const LazyAssetBuyerDocumentation = createLazyComponent('Documentation', async () =>
     import(/* webpackChunkName: "assetBuyerDocs" */ 'ts/containers/asset_buyer_documentation'),
 );
+const LazyAssetSwapperDocumentation = createLazyComponent('Documentation', async () =>
+    import(/* webpackChunkName: "assetSwapperDocs" */ 'ts/containers/asset_swapper_documentation'),
+);
 
 const DOCUMENT_TITLE = '0x: The Protocol for Trading Tokens';
 const DOCUMENT_DESCRIPTION = 'An Open Protocol For Decentralized Exchange On The Ethereum Blockchain';
@@ -123,7 +127,8 @@ render(
                                 <Route exact={true} path={WebsitePaths.Instant} component={Next0xInstant as any} />
                                 <Route exact={true} path={WebsitePaths.LaunchKit} component={NextLaunchKit as any} />
                                 <Route exact={true} path={WebsitePaths.Ecosystem} component={NextEcosystem as any} />
-                                <Route exact={true} path={WebsitePaths.Vote} component={Governance as any} />
+                                <Route exact={true} path={`${WebsitePaths.Vote}/:zeip`} component={Governance as any} />
+                                <Route exact={true} path={WebsitePaths.Vote} component={VoteIndex as any} />
                                 <Route exact={true} path={WebsitePaths.Extensions} component={Extensions as any} />
                                 <Route
                                     exact={true}
@@ -204,6 +209,10 @@ render(
                                 <Route
                                     path={`${WebsitePaths.AssetBuyer}/:version?`}
                                     component={LazyAssetBuyerDocumentation}
+                                />
+                                <Route
+                                    path={`${WebsitePaths.AssetSwapper}/:version?`}
+                                    component={LazyAssetSwapperDocumentation}
                                 />
                                 <Route path={`${WebsitePaths.Docs}/:type/:page`} component={DocsPage as any} />
                                 <Route exact={true} path={WebsitePaths.DocsGuides} component={DocsGuides as any} />

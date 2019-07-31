@@ -5,6 +5,22 @@ Edit the package's CHANGELOG.json file only.
 
 CHANGELOG
 
+## v9.1.8 - _July 24, 2019_
+
+    * re-export new ethereum-types type, TupleDataItem (#1919)
+
+## v9.1.7 - _July 15, 2019_
+
+    * Dependencies updated
+
+## v9.1.6 - _July 13, 2019_
+
+    * Dependencies updated
+
+## v9.1.5 - _July 13, 2019_
+
+    * Use assetDataUtils for encoding and decoding DutchAuctionData
+
 ## v9.1.4 - _May 24, 2019_
 
     * Dependencies updated

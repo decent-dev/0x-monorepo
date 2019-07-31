@@ -82,7 +82,7 @@ describe(ContractName.DutchAuction, () => {
         const erc721Balances = await erc721Wrapper.getBalancesAsync();
         erc721MakerAssetIds = erc721Balances[makerAddress][erc721Token.address];
 
-        wethContract = await WETH9Contract.deployFrom0xArtifactAsync(artifacts.WETH9, provider, txDefaults);
+        wethContract = await WETH9Contract.deployFrom0xArtifactAsync(artifacts.WETH9, provider, txDefaults, artifacts);
         erc20Wrapper.addDummyTokenContract(wethContract as any);
 
         const zrxAssetData = assetDataUtils.encodeERC20AssetData(zrxToken.address);
@@ -90,6 +90,7 @@ describe(ContractName.DutchAuction, () => {
             artifacts.Exchange,
             provider,
             txDefaults,
+            artifacts,
             zrxAssetData,
         );
         const exchangeWrapper = new ExchangeWrapper(exchangeInstance, provider);
@@ -107,13 +108,10 @@ describe(ContractName.DutchAuction, () => {
             artifacts.DutchAuction,
             provider,
             txDefaults,
+            artifacts,
             exchangeInstance.address,
         );
-        dutchAuctionContract = new DutchAuctionContract(
-            dutchAuctionInstance.abi,
-            dutchAuctionInstance.address,
-            provider,
-        );
+        dutchAuctionContract = new DutchAuctionContract(dutchAuctionInstance.address, provider);
         dutchAuctionTestWrapper = new DutchAuctionTestWrapper(dutchAuctionInstance, provider);
 
         defaultMakerAssetAddress = erc20TokenA.address;

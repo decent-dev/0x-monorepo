@@ -5,6 +5,28 @@ Edit the package's CHANGELOG.json file only.
 
 CHANGELOG
 
+## v3.1.1 - _July 24, 2019_
+
+    * Python method parameters are now in snake case (#1919)
+    * Python wrappers now support tuples in method parameters (#1919)
+    * document Python method's bytes params as requiring UTF-8 (#1919)
+    * generate Python output into a contract-named folder, not a file (eg exchange/__init__.py rather than exchange.py) leaving space for user-defined additions to the same module, such as for custom types, as used by the Exchange wrapper's manually-written type aliases in the contract_wrappers.exchange.types Python module (#1919)
+    * support for customizable parameter validation for Python wrappers (#1919)
+    * wrap Python docstrings better, for pydocstyle compliance (#1919)
+    * lots of fixes to satisfy linters of generated Python code (#1919)
+
+## v2.1.1 - _July 13, 2019_
+
+    * Dependencies updated
+
+## v2.1.0 - _July 13, 2019_
+
+    * Initial support for Python (#1878)
+
+## v2.0.11 - _Invalid date_
+
+    * Watch template files for changes (#1875)
+
 ## v2.0.10 - _May 10, 2019_
 
     * Dependencies updated

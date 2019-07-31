@@ -1,11 +1,14 @@
 import {
     artifacts as proxyArtifacts,
+    ERC1155ProxyContract,
     ERC1155ProxyWrapper,
     ERC20ProxyContract,
     ERC20Wrapper,
     ERC721ProxyContract,
     ERC721Wrapper,
     MultiAssetProxyContract,
+    StaticCallProxyContract,
+    TestStaticCallTargetContract,
 } from '@0x/contracts-asset-proxy';
 import { ERC1155MintableContract } from '@0x/contracts-erc1155';
 import {
@@ -48,6 +51,8 @@ import {
     TestStaticCallReceiverContract,
 } from '../src';
 
+import { dependencyArtifacts } from './utils/dependency_artifacts';
+
 chaiSetup.configure();
 const expect = chai.expect;
 const blockchainLifecycle = new BlockchainLifecycle(web3Wrapper);
@@ -67,8 +72,10 @@ describe('Exchange core', () => {
     let exchange: ExchangeContract;
     let erc20Proxy: ERC20ProxyContract;
     let erc721Proxy: ERC721ProxyContract;
-    let erc1155Proxy: ERC721ProxyContract;
+    let erc1155Proxy: ERC1155ProxyContract;
     let multiAssetProxy: MultiAssetProxyContract;
+    let staticCallProxy: StaticCallProxyContract;
+    let staticCallTarget: TestStaticCallTargetContract;
     let maliciousWallet: TestStaticCallReceiverContract;
     let maliciousValidator: TestStaticCallReceiverContract;
     let erc1155Contract: ERC1155MintableContract;
@@ -112,6 +119,13 @@ describe('Exchange core', () => {
             proxyArtifacts.MultiAssetProxy,
             provider,
             txDefaults,
+            dependencyArtifacts,
+        );
+        staticCallProxy = await StaticCallProxyContract.deployFrom0xArtifactAsync(
+            proxyArtifacts.StaticCallProxy,
+            provider,
+            txDefaults,
+            dependencyArtifacts,
         );
         const numDummyErc20ToDeploy = 3;
         [erc20TokenA, erc20TokenB, zrxToken] = await erc20Wrapper.deployDummyTokensAsync(
@@ -126,81 +140,40 @@ describe('Exchange core', () => {
             artifacts.Exchange,
             provider,
             txDefaults,
+            dependencyArtifacts,
             assetDataUtils.encodeERC20AssetData(zrxToken.address),
         );
         maliciousWallet = maliciousValidator = await TestStaticCallReceiverContract.deployFrom0xArtifactAsync(
             artifacts.TestStaticCallReceiver,
             provider,
             txDefaults,
+            dependencyArtifacts,
         );
         reentrantErc20Token = await ReentrantERC20TokenContract.deployFrom0xArtifactAsync(
             artifacts.ReentrantERC20Token,
             provider,
             txDefaults,
+            dependencyArtifacts,
             exchange.address,
         );
 
         // Configure ERC20Proxy
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc20Proxy.addAuthorizedAddress.sendTransactionAsync(exchange.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc20Proxy.addAuthorizedAddress.sendTransactionAsync(multiAssetProxy.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
+        await erc20Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(exchange.address, { from: owner });
+        await erc20Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(multiAssetProxy.address, { from: owner });
 
         // Configure ERC721Proxy
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc721Proxy.addAuthorizedAddress.sendTransactionAsync(exchange.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc721Proxy.addAuthorizedAddress.sendTransactionAsync(multiAssetProxy.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
+        await erc721Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(exchange.address, { from: owner });
+        await erc721Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(multiAssetProxy.address, { from: owner });
 
         // Configure ERC1155Proxy
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc1155Proxy.addAuthorizedAddress.sendTransactionAsync(exchange.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await erc1155Proxy.addAuthorizedAddress.sendTransactionAsync(multiAssetProxy.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
+        await erc1155Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(exchange.address, { from: owner });
+        await erc1155Proxy.addAuthorizedAddress.awaitTransactionSuccessAsync(multiAssetProxy.address, { from: owner });
 
         // Configure MultiAssetProxy
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await multiAssetProxy.addAuthorizedAddress.sendTransactionAsync(exchange.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await multiAssetProxy.registerAssetProxy.sendTransactionAsync(erc20Proxy.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
-        await web3Wrapper.awaitTransactionSuccessAsync(
-            await multiAssetProxy.registerAssetProxy.sendTransactionAsync(erc721Proxy.address, {
-                from: owner,
-            }),
-            constants.AWAIT_TRANSACTION_MINED_MS,
-        );
+        await multiAssetProxy.addAuthorizedAddress.awaitTransactionSuccessAsync(exchange.address, { from: owner });
+        await multiAssetProxy.registerAssetProxy.awaitTransactionSuccessAsync(erc20Proxy.address, { from: owner });
+        await multiAssetProxy.registerAssetProxy.awaitTransactionSuccessAsync(erc721Proxy.address, { from: owner });
+        await multiAssetProxy.registerAssetProxy.awaitTransactionSuccessAsync(staticCallProxy.address, { from: owner });
 
         // Configure Exchange
         exchangeWrapper = new ExchangeWrapper(exchange, provider);
@@ -208,6 +181,7 @@ describe('Exchange core', () => {
         await exchangeWrapper.registerAssetProxyAsync(erc721Proxy.address, owner);
         await exchangeWrapper.registerAssetProxyAsync(erc1155Proxy.address, owner);
         await exchangeWrapper.registerAssetProxyAsync(multiAssetProxy.address, owner);
+        await exchangeWrapper.registerAssetProxyAsync(staticCallProxy.address, owner);
 
         // Configure ERC20 tokens
         await erc20Wrapper.setBalancesAndAllowancesAsync();
@@ -268,10 +242,7 @@ describe('Exchange core', () => {
                     signedOrder = await orderFactory.newSignedOrderAsync({
                         makerAssetData: assetDataUtils.encodeERC20AssetData(reentrantErc20Token.address),
                     });
-                    await web3Wrapper.awaitTransactionSuccessAsync(
-                        await reentrantErc20Token.setCurrentFunction.sendTransactionAsync(functionId),
-                        constants.AWAIT_TRANSACTION_MINED_MS,
-                    );
+                    await reentrantErc20Token.setCurrentFunction.awaitTransactionSuccessAsync(functionId);
                     await expectTransactionFailedAsync(
                         exchangeWrapper.fillOrderAsync(signedOrder, takerAddress),
                         RevertReason.TransferFailed,
@@ -310,20 +281,14 @@ describe('Exchange core', () => {
 
         it('should revert if `isValidSignature` tries to update state when SignatureType=Wallet', async () => {
             const maliciousMakerAddress = maliciousWallet.address;
-            await web3Wrapper.awaitTransactionSuccessAsync(
-                await erc20TokenA.setBalance.sendTransactionAsync(
-                    maliciousMakerAddress,
-                    constants.INITIAL_ERC20_BALANCE,
-                ),
-                constants.AWAIT_TRANSACTION_MINED_MS,
+            await erc20TokenA.setBalance.awaitTransactionSuccessAsync(
+                maliciousMakerAddress,
+                constants.INITIAL_ERC20_BALANCE,
             );
-            await web3Wrapper.awaitTransactionSuccessAsync(
-                await maliciousWallet.approveERC20.sendTransactionAsync(
-                    erc20TokenA.address,
-                    erc20Proxy.address,
-                    constants.INITIAL_ERC20_ALLOWANCE,
-                ),
-                constants.AWAIT_TRANSACTION_MINED_MS,
+            await maliciousWallet.approveERC20.awaitTransactionSuccessAsync(
+                erc20TokenA.address,
+                erc20Proxy.address,
+                constants.INITIAL_ERC20_ALLOWANCE,
             );
             signedOrder = await orderFactory.newSignedOrderAsync({
                 makerAddress: maliciousMakerAddress,
@@ -338,13 +303,10 @@ describe('Exchange core', () => {
 
         it('should revert if `isValidSignature` tries to update state when SignatureType=Validator', async () => {
             const isApproved = true;
-            await web3Wrapper.awaitTransactionSuccessAsync(
-                await exchange.setSignatureValidatorApproval.sendTransactionAsync(
-                    maliciousValidator.address,
-                    isApproved,
-                    { from: makerAddress },
-                ),
-                constants.AWAIT_TRANSACTION_MINED_MS,
+            await exchange.setSignatureValidatorApproval.awaitTransactionSuccessAsync(
+                maliciousValidator.address,
+                isApproved,
+                { from: makerAddress },
             );
             signedOrder.signature = `${maliciousValidator.address}0${SignatureType.Validator}`;
             await expectTransactionFailedAsync(
@@ -394,22 +356,20 @@ describe('Exchange core', () => {
                 erc20Artifacts.DummyNoReturnERC20Token,
                 provider,
                 txDefaults,
+                dependencyArtifacts,
                 constants.DUMMY_TOKEN_NAME,
                 constants.DUMMY_TOKEN_SYMBOL,
                 constants.DUMMY_TOKEN_DECIMALS,
                 constants.DUMMY_TOKEN_TOTAL_SUPPLY,
             );
-            await web3Wrapper.awaitTransactionSuccessAsync(
-                await noReturnErc20Token.setBalance.sendTransactionAsync(makerAddress, constants.INITIAL_ERC20_BALANCE),
-                constants.AWAIT_TRANSACTION_MINED_MS,
+            await noReturnErc20Token.setBalance.awaitTransactionSuccessAsync(
+                makerAddress,
+                constants.INITIAL_ERC20_BALANCE,
             );
-            await web3Wrapper.awaitTransactionSuccessAsync(
-                await noReturnErc20Token.approve.sendTransactionAsync(
-                    erc20Proxy.address,
-                    constants.INITIAL_ERC20_ALLOWANCE,
-                    { from: makerAddress },
-                ),
-                constants.AWAIT_TRANSACTION_MINED_MS,
+            await noReturnErc20Token.approve.awaitTransactionSuccessAsync(
+                erc20Proxy.address,
+                constants.INITIAL_ERC20_ALLOWANCE,
+                { from: makerAddress },
             );
         });
         it('should transfer the correct amounts when makerAssetAmount === takerAssetAmount', async () => {
@@ -1513,6 +1473,123 @@ describe('Exchange core', () => {
             expect(orderInfo.orderHash).to.be.equal(expectedOrderHash);
             expect(orderInfo.orderTakerAssetFilledAmount).to.be.bignumber.equal(expectedTakerAssetFilledAmount);
             expect(orderInfo.orderStatus).to.equal(expectedOrderStatus);
+        });
+    });
+
+    describe('Testing orders that utilize StaticCallProxy', () => {
+        before(async () => {
+            staticCallTarget = await TestStaticCallTargetContract.deployFrom0xArtifactAsync(
+                proxyArtifacts.TestStaticCallTarget,
+                provider,
+                txDefaults,
+                dependencyArtifacts,
+            );
+        });
+        it('should revert if the staticcall is unsuccessful', async () => {
+            const staticCallData = staticCallTarget.assertEvenNumber.getABIEncodedTransactionData(new BigNumber(1));
+            const assetData = assetDataUtils.encodeStaticCallAssetData(
+                staticCallTarget.address,
+                staticCallData,
+                constants.KECCAK256_NULL,
+            );
+            signedOrder = await orderFactory.newSignedOrderAsync({ makerAssetData: assetData });
+            await expectTransactionFailedAsync(
+                exchangeWrapper.fillOrderAsync(signedOrder, takerAddress),
+                RevertReason.TargetNotEven,
+            );
+        });
+        it('should fill the order if the staticcall is successful', async () => {
+            const staticCallData = staticCallTarget.assertEvenNumber.getABIEncodedTransactionData(
+                constants.ZERO_AMOUNT,
+            );
+            const assetData = assetDataUtils.encodeStaticCallAssetData(
+                staticCallTarget.address,
+                staticCallData,
+                constants.KECCAK256_NULL,
+            );
+            signedOrder = await orderFactory.newSignedOrderAsync({ makerAssetData: assetData });
+
+            const initialMakerZrxBalance = await zrxToken.balanceOf.callAsync(makerAddress);
+            const initialTakerZrxBalance = await zrxToken.balanceOf.callAsync(takerAddress);
+            const initialFeeRecipientZrxBalance = await zrxToken.balanceOf.callAsync(feeRecipientAddress);
+            const initialMakerBalanceB = await erc20TokenB.balanceOf.callAsync(makerAddress);
+            const initialTakerBalanceB = await erc20TokenB.balanceOf.callAsync(takerAddress);
+
+            await exchangeWrapper.fillOrderAsync(signedOrder, takerAddress);
+
+            const finalMakerZrxBalance = await zrxToken.balanceOf.callAsync(makerAddress);
+            const finalTakerZrxBalance = await zrxToken.balanceOf.callAsync(takerAddress);
+            const finalFeeRecipientZrxBalance = await zrxToken.balanceOf.callAsync(feeRecipientAddress);
+            const finalMakerBalanceB = await erc20TokenB.balanceOf.callAsync(makerAddress);
+            const finalTakerBalanceB = await erc20TokenB.balanceOf.callAsync(takerAddress);
+
+            expect(finalMakerZrxBalance).to.bignumber.equal(initialMakerZrxBalance.minus(signedOrder.makerFee));
+            expect(finalTakerZrxBalance).to.bignumber.equal(initialTakerZrxBalance.minus(signedOrder.takerFee));
+            expect(finalFeeRecipientZrxBalance).to.bignumber.equal(
+                initialFeeRecipientZrxBalance.plus(signedOrder.makerFee).plus(signedOrder.takerFee),
+            );
+            expect(finalMakerBalanceB).to.bignumber.equal(initialMakerBalanceB.plus(signedOrder.takerAssetAmount));
+            expect(finalTakerBalanceB).to.bignumber.equal(initialTakerBalanceB.minus(signedOrder.takerAssetAmount));
+        });
+        it('should revert if the staticcall is unsuccessful using the MultiAssetProxy', async () => {
+            const staticCallData = staticCallTarget.assertEvenNumber.getABIEncodedTransactionData(new BigNumber(1));
+            const staticCallAssetData = assetDataUtils.encodeStaticCallAssetData(
+                staticCallTarget.address,
+                staticCallData,
+                constants.KECCAK256_NULL,
+            );
+            const assetData = assetDataUtils.encodeMultiAssetData(
+                [new BigNumber(1), new BigNumber(1)],
+                [assetDataUtils.encodeERC20AssetData(defaultMakerAssetAddress), staticCallAssetData],
+            );
+            signedOrder = await orderFactory.newSignedOrderAsync({ makerAssetData: assetData });
+            await expectTransactionFailedAsync(
+                exchangeWrapper.fillOrderAsync(signedOrder, takerAddress),
+                RevertReason.TargetNotEven,
+            );
+        });
+        it('should fill the order is the staticcall is successful using the MultiAssetProxy', async () => {
+            const staticCallData = staticCallTarget.assertEvenNumber.getABIEncodedTransactionData(
+                constants.ZERO_AMOUNT,
+            );
+            const staticCallAssetData = assetDataUtils.encodeStaticCallAssetData(
+                staticCallTarget.address,
+                staticCallData,
+                constants.KECCAK256_NULL,
+            );
+            const assetData = assetDataUtils.encodeMultiAssetData(
+                [new BigNumber(1), new BigNumber(1)],
+                [assetDataUtils.encodeERC20AssetData(defaultMakerAssetAddress), staticCallAssetData],
+            );
+            signedOrder = await orderFactory.newSignedOrderAsync({ makerAssetData: assetData });
+
+            const initialMakerZrxBalance = await zrxToken.balanceOf.callAsync(makerAddress);
+            const initialTakerZrxBalance = await zrxToken.balanceOf.callAsync(takerAddress);
+            const initialFeeRecipientZrxBalance = await zrxToken.balanceOf.callAsync(feeRecipientAddress);
+            const initialMakerBalanceA = await erc20TokenA.balanceOf.callAsync(makerAddress);
+            const initialTakerBalanceA = await erc20TokenA.balanceOf.callAsync(takerAddress);
+            const initialMakerBalanceB = await erc20TokenB.balanceOf.callAsync(makerAddress);
+            const initialTakerBalanceB = await erc20TokenB.balanceOf.callAsync(takerAddress);
+
+            await exchangeWrapper.fillOrderAsync(signedOrder, takerAddress);
+
+            const finalMakerZrxBalance = await zrxToken.balanceOf.callAsync(makerAddress);
+            const finalTakerZrxBalance = await zrxToken.balanceOf.callAsync(takerAddress);
+            const finalFeeRecipientZrxBalance = await zrxToken.balanceOf.callAsync(feeRecipientAddress);
+            const finalMakerBalanceA = await erc20TokenA.balanceOf.callAsync(makerAddress);
+            const finalTakerBalanceA = await erc20TokenA.balanceOf.callAsync(takerAddress);
+            const finalMakerBalanceB = await erc20TokenB.balanceOf.callAsync(makerAddress);
+            const finalTakerBalanceB = await erc20TokenB.balanceOf.callAsync(takerAddress);
+
+            expect(finalMakerZrxBalance).to.bignumber.equal(initialMakerZrxBalance.minus(signedOrder.makerFee));
+            expect(finalTakerZrxBalance).to.bignumber.equal(initialTakerZrxBalance.minus(signedOrder.takerFee));
+            expect(finalFeeRecipientZrxBalance).to.bignumber.equal(
+                initialFeeRecipientZrxBalance.plus(signedOrder.makerFee).plus(signedOrder.takerFee),
+            );
+            expect(finalMakerBalanceA).to.bignumber.equal(initialMakerBalanceA.minus(signedOrder.makerAssetAmount));
+            expect(finalTakerBalanceA).to.bignumber.equal(initialTakerBalanceA.plus(signedOrder.makerAssetAmount));
+            expect(finalMakerBalanceB).to.bignumber.equal(initialMakerBalanceB.plus(signedOrder.takerAssetAmount));
+            expect(finalTakerBalanceB).to.bignumber.equal(initialTakerBalanceB.minus(signedOrder.takerAssetAmount));
         });
     });
 

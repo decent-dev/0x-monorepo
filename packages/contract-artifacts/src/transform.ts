@@ -6,6 +6,8 @@ export const REQUIRED_PROPERTIES: string[] = [
     'contractName',
     'compilerOutput.evm.bytecode.object',
     'compilerOutput.abi',
+    'compilerOutput.devdoc',
+    'compiler',
 ];
 
 export const FORBIDDEN_PROPERTIES: string[] = [

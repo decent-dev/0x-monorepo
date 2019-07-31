@@ -1,5 +1,37 @@
 [
     {
+        "timestamp": 1563957393,
+        "version": "2.4.1",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
+        "version": "2.4.0",
+        "changes": [
+            {
+                "note": "Add MarketOperation type",
+                "pr": 1914
+            }
+        ],
+        "timestamp": 1563006338
+    },
+    {
+        "version": "2.3.0",
+        "changes": [
+            {
+                "note": "Add StaticCallProxy types",
+                "pr": 1863
+            },
+            {
+                "note": "Add `InvalidStaticCallDataOffset`, `TargetNotEven`, `UnexpectedStaticCallResult`, and `InvalidAssetDataEnd` to `RevertReason` enum",
+                "pr": 1863
+            }
+        ]
+    },
+    {
         "version": "2.2.2",
         "changes": [
             {

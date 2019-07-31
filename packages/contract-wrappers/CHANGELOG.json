@@ -1,5 +1,64 @@
 [
     {
+        "version": "10.1.0",
+        "changes": [
+            {
+                "note": "Updated interface to `deployFrom0xArtifactAsync` to include log decode dependencies.",
+                "pr": 1995
+            },
+            {
+                "note": "Updated interface to `deployAsync` to include log decode dependencies.",
+                "pr": 1995
+            }
+        ]
+    },
+    {
+        "version": "10.0.0",
+        "changes": [
+            {
+                "note": "Constructors for `ERC20TokenWrapper`, `ERC721TokenWrapper`, and `EtherTokenWrapper` no longer accept networkId",
+                "pr": 1970
+            }
+        ]
+    },
+    {
+        "version": "9.1.8",
+        "changes": [
+            {
+                "note": "re-export new ethereum-types type, TupleDataItem",
+                "pr": 1919
+            }
+        ],
+        "timestamp": 1563957393
+    },
+    {
+        "timestamp": 1563193019,
+        "version": "9.1.7",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
+        "timestamp": 1563047529,
+        "version": "9.1.6",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
+        "version": "9.1.5",
+        "changes": [
+            {
+                "note": "Use assetDataUtils for encoding and decoding DutchAuctionData"
+            }
+        ],
+        "timestamp": 1563006338
+    },
+    {
         "timestamp": 1558712885,
         "version": "9.1.4",
         "changes": [

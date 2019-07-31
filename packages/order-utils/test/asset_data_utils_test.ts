@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 
-import { AssetProxyId, ERC1155AssetData, ERC721AssetData } from '@0x/types';
+import { AssetProxyId, ERC1155AssetData, ERC20AssetData, ERC721AssetData } from '@0x/types';
 import { BigNumber } from '@0x/utils';
 
 import { assetDataUtils } from '../src/asset_data_utils';
@@ -38,6 +38,15 @@ const KNOWN_MULTI_ASSET_ENCODING = {
     ],
     assetData:
         '0x94cfcdd7000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000046000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000024f47261b00000000000000000000000001dc4c1cefef38a777b15aa20260a54e584b16c48000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044025717920000000000000000000000001dc4c1cefef38a777b15aa20260a54e584b16c480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000204a7cb5fb70000000000000000000000001dc4c1cefef38a777b15aa20260a54e584b16c480000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000003e90000000000000000000000000000000000000000000000000000000000002711000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000c800000000000000000000000000000000000000000000000000000000000007d10000000000000000000000000000000000000000000000000000000000004e210000000000000000000000000000000000000000000000000000000000000044025717920000000000000000000000001dc4c1cefef38a777b15aa20260a54e584b16c4800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+};
+
+const KNOWN_DUTCH_AUCTION_ENCODING = {
+    tokenAddress: '0x34d402f14d58e001d8efbe6585051bf9706aa064',
+    assetData: '0xf47261b000000000000000000000000034d402f14d58e001d8efbe6585051bf9706aa064', // ERC20
+    beginTimeSeconds: new BigNumber(1562807905),
+    beginAmount: new BigNumber(5),
+    dutchAuctionAssetData:
+        '0xf47261b000000000000000000000000034d402f14d58e001d8efbe6585051bf9706aa064000000000000000000000000000000000000000000000000000000005d268e610000000000000000000000000000000000000000000000000000000000000005',
 };
 
 describe('assetDataUtils', () => {
@@ -98,7 +107,8 @@ describe('assetDataUtils', () => {
         expect(decodedAssetData.assetProxyId).to.equal(AssetProxyId.MultiAsset);
         expect(decodedAssetData.amounts).to.deep.equal(KNOWN_MULTI_ASSET_ENCODING.amounts);
         expect(decodedAssetData.nestedAssetData.length).to.equal(3);
-        const decodedErc20AssetData = decodedAssetData.nestedAssetData[0];
+        // tslint:disable-next-line:no-unnecessary-type-assertion
+        const decodedErc20AssetData = decodedAssetData.nestedAssetData[0] as ERC20AssetData;
         expect(decodedErc20AssetData.tokenAddress).to.equal(KNOWN_ERC20_ENCODING.address);
         expect(decodedErc20AssetData.assetProxyId).to.equal(AssetProxyId.ERC20);
         // tslint:disable-next-line:no-unnecessary-type-assertion
@@ -144,7 +154,8 @@ describe('assetDataUtils', () => {
         expect(decodedAssetData.nestedAssetData.length).to.be.equal(expectedNestedAssetDataLength);
         // validate nested asset data (outer)
         let nestedAssetDataIndex = 0;
-        const decodedErc20AssetData1 = decodedAssetData.nestedAssetData[nestedAssetDataIndex++];
+        // tslint:disable-next-line:no-unnecessary-type-assertion
+        const decodedErc20AssetData1 = decodedAssetData.nestedAssetData[nestedAssetDataIndex++] as ERC20AssetData;
         expect(decodedErc20AssetData1.tokenAddress).to.equal(KNOWN_ERC20_ENCODING.address);
         expect(decodedErc20AssetData1.assetProxyId).to.equal(AssetProxyId.ERC20);
         // tslint:disable-next-line:no-unnecessary-type-assertion
@@ -158,7 +169,8 @@ describe('assetDataUtils', () => {
         expect(decodedErc1155AssetData1.tokenIds).to.be.deep.equal(KNOWN_ERC1155_ENCODING.tokenIds);
         expect(decodedErc1155AssetData1.callbackData).to.be.equal(KNOWN_ERC1155_ENCODING.callbackData);
         // validate nested asset data (inner)
-        const decodedErc20AssetData2 = decodedAssetData.nestedAssetData[nestedAssetDataIndex++];
+        // tslint:disable-next-line:no-unnecessary-type-assertion
+        const decodedErc20AssetData2 = decodedAssetData.nestedAssetData[nestedAssetDataIndex++] as ERC20AssetData;
         expect(decodedErc20AssetData2.tokenAddress).to.equal(KNOWN_ERC20_ENCODING.address);
         expect(decodedErc20AssetData2.assetProxyId).to.equal(AssetProxyId.ERC20);
         // tslint:disable-next-line:no-unnecessary-type-assertion
@@ -171,5 +183,29 @@ describe('assetDataUtils', () => {
         expect(decodedErc1155AssetData2.tokenValues).to.be.deep.equal(KNOWN_ERC1155_ENCODING.tokenValues);
         expect(decodedErc1155AssetData2.tokenIds).to.be.deep.equal(KNOWN_ERC1155_ENCODING.tokenIds);
         expect(decodedErc1155AssetData2.callbackData).to.be.equal(KNOWN_ERC1155_ENCODING.callbackData);
+    });
+    it('should encode Dutch Auction', async () => {
+        const encodedAssetData = assetDataUtils.encodeDutchAuctionAssetData(
+            KNOWN_DUTCH_AUCTION_ENCODING.assetData,
+            KNOWN_DUTCH_AUCTION_ENCODING.beginTimeSeconds,
+            KNOWN_DUTCH_AUCTION_ENCODING.beginAmount,
+        );
+        expect(encodedAssetData).to.be.equal(KNOWN_DUTCH_AUCTION_ENCODING.dutchAuctionAssetData);
+    });
+    it('should decode Dutch Auction', async () => {
+        const { assetData, beginTimeSeconds, beginAmount } = assetDataUtils.decodeDutchAuctionData(
+            KNOWN_DUTCH_AUCTION_ENCODING.dutchAuctionAssetData,
+        );
+
+        const { assetProxyId, tokenAddress } = assetDataUtils.decodeERC20AssetData(
+            KNOWN_DUTCH_AUCTION_ENCODING.assetData,
+        );
+
+        // tslint:disable:no-unnecessary-type-assertion
+        expect((assetData as ERC20AssetData).assetProxyId).to.be.equal(assetProxyId);
+        expect((assetData as ERC20AssetData).tokenAddress).to.be.equal(tokenAddress);
+        // tslint:enable:no-unnecessary-type-assertion
+        expect(beginTimeSeconds).to.deep.equal(KNOWN_DUTCH_AUCTION_ENCODING.beginTimeSeconds);
+        expect(beginAmount).to.deep.equal(KNOWN_DUTCH_AUCTION_ENCODING.beginAmount);
     });
 });

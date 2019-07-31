@@ -1,15 +1,18 @@
 import {
     AssetProxyId,
+    DutchAuctionData,
     ERC1155AssetData,
-    ERC1155AssetDataAbi,
     ERC1155AssetDataNoProxyId,
     ERC20AssetData,
     ERC721AssetData,
     MultiAssetData,
     MultiAssetDataWithRecursiveDecoding,
     SingleAssetData,
+    StaticCallAssetData,
 } from '@0x/types';
 import { AbiEncoder, BigNumber } from '@0x/utils';
+import * as ethAbi from 'ethereumjs-abi';
+import * as ethUtil from 'ethereumjs-util';
 import * as _ from 'lodash';
 
 import { constants } from './constants';
@@ -31,7 +34,7 @@ export const assetDataUtils = {
         return assetData;
     },
     /**
-     * Decodes an ERC20 assetData hex string into it's corresponding ERC20 tokenAddress & assetProxyId
+     * Decodes an ERC20 assetData hex string into its corresponding ERC20 tokenAddress & assetProxyId
      * @param assetData Hex encoded assetData string to decode
      * @return An object containing the decoded tokenAddress & assetProxyId
      */
@@ -60,7 +63,7 @@ export const assetDataUtils = {
         return assetData;
     },
     /**
-     * Decodes an ERC721 assetData hex string into it's corresponding ERC721 tokenAddress, tokenId & assetProxyId
+     * Decodes an ERC721 assetData hex string into its corresponding ERC721 tokenAddress, tokenId & assetProxyId
      * @param assetData Hex encoded assetData string to decode
      * @return An object containing the decoded tokenAddress, tokenId & assetProxyId
      */
@@ -91,13 +94,13 @@ export const assetDataUtils = {
         tokenValues: BigNumber[],
         callbackData: string,
     ): string {
-        const abiEncoder = AbiEncoder.createMethod('ERC1155Assets', ERC1155AssetDataAbi);
+        const abiEncoder = AbiEncoder.createMethod('ERC1155Assets', constants.ERC1155_METHOD_ABI.inputs);
         const args = [tokenAddress, tokenIds, tokenValues, callbackData];
         const assetData = abiEncoder.encode(args, encodingRules);
         return assetData;
     },
     /**
-     * Decodes an ERC1155 assetData hex string into it's corresponding ERC1155 components.
+     * Decodes an ERC1155 assetData hex string into its corresponding ERC1155 components.
      * @param assetData Hex encoded assetData string to decode
      * @return An object containing the decoded tokenAddress, tokenIds, tokenValues, callbackData & assetProxyId
      */
@@ -106,7 +109,7 @@ export const assetDataUtils = {
         if (assetProxyId !== AssetProxyId.ERC1155) {
             throw new Error(`Invalid assetProxyId. Expected '${AssetProxyId.ERC1155}', got '${assetProxyId}'`);
         }
-        const abiEncoder = AbiEncoder.createMethod('ERC1155Assets', ERC1155AssetDataAbi);
+        const abiEncoder = AbiEncoder.createMethod('ERC1155Assets', constants.ERC1155_METHOD_ABI.inputs);
         // tslint:disable-next-line:no-unnecessary-type-assertion
         const decodedAssetData = abiEncoder.decode(assetData, decodingRules) as ERC1155AssetDataNoProxyId;
         return {
@@ -139,7 +142,7 @@ export const assetDataUtils = {
         return assetData;
     },
     /**
-     * Decodes a MultiAsset assetData hex string into it's corresponding amounts and nestedAssetData
+     * Decodes a MultiAsset assetData hex string into its corresponding amounts and nestedAssetData
      * @param assetData Hex encoded assetData string to decode
      * @return An object containing the decoded amounts and nestedAssetData
      */
@@ -165,7 +168,7 @@ export const assetDataUtils = {
         };
     },
     /**
-     * Decodes a MultiAsset assetData hex string into it's corresponding amounts and decoded nestedAssetData elements (all nested elements are flattened)
+     * Decodes a MultiAsset assetData hex string into its corresponding amounts and decoded nestedAssetData elements (all nested elements are flattened)
      * @param assetData Hex encoded assetData string to decode
      * @return An object containing the decoded amounts and nestedAssetData
      */
@@ -202,6 +205,88 @@ export const assetDataUtils = {
         };
     },
     /**
+     * Encodes StaticCallProxy data into an assetData hex string
+     * @param callTarget Address of contract to call from StaticCallProxy
+     * @param staticCallData The function data that will be called on the callTarget contract
+     * @param callResultHash The keccak256 hash of the ABI encoded expected output of the static call
+     * @return The hex encoded assetData string
+     */
+    encodeStaticCallAssetData(callTarget: string, staticCallData: string, callResultHash: string): string {
+        const abiEncoder = AbiEncoder.createMethod('StaticCall', constants.STATIC_CALL_METHOD_ABI.inputs);
+        const args = [callTarget, staticCallData, callResultHash];
+        const assetData = abiEncoder.encode(args, encodingRules);
+        return assetData;
+    },
+    /**
+     * Decoded StaticCall assetData into its corresponding callTarget, staticCallData, and expected callResultHash
+     * @param assetData Hex encoded assetData string to decode
+     * @return An object containing the decoded callTarget, staticCallData, and expected callResultHash
+     */
+    decodeStaticCallAssetData(assetData: string): StaticCallAssetData {
+        const abiEncoder = AbiEncoder.createMethod('StaticCall', constants.STATIC_CALL_METHOD_ABI.inputs);
+        const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
+        const decodedAssetData = abiEncoder.decode(assetData, decodingRules) as any;
+        return {
+            assetProxyId,
+            callTarget: decodedAssetData.callTarget,
+            callResultHash: decodedAssetData.callResultHash,
+            staticCallData: decodedAssetData.staticCallData,
+        };
+    },
+    /**
+     * Dutch auction details are encoded with the asset data for a 0x order. This function produces a hex
+     * encoded assetData string, containing information both about the asset being traded and the
+     * dutch auction; which is usable in the makerAssetData or takerAssetData fields in a 0x order.
+     * @param assetData Hex encoded assetData string for the asset being auctioned.
+     * @param beginTimeSeconds Begin time of the dutch auction.
+     * @param beginAmount Starting amount being sold in the dutch auction.
+     * @return The hex encoded assetData string.
+     */
+    encodeDutchAuctionAssetData(assetData: string, beginTimeSeconds: BigNumber, beginAmount: BigNumber): string {
+        const assetDataBuffer = ethUtil.toBuffer(assetData);
+        const abiEncodedAuctionData = (ethAbi as any).rawEncode(
+            ['uint256', 'uint256'],
+            [beginTimeSeconds.toString(), beginAmount.toString()],
+        );
+        const abiEncodedAuctionDataBuffer = ethUtil.toBuffer(abiEncodedAuctionData);
+        const dutchAuctionDataBuffer = Buffer.concat([assetDataBuffer, abiEncodedAuctionDataBuffer]);
+        const dutchAuctionData = ethUtil.bufferToHex(dutchAuctionDataBuffer);
+        return dutchAuctionData;
+    },
+    /**
+     * Dutch auction details are encoded with the asset data for a 0x order. This function decodes a hex
+     * encoded assetData string, containing information both about the asset being traded and the
+     * dutch auction.
+     * @param dutchAuctionData Hex encoded assetData string for the asset being auctioned.
+     * @return An object containing the auction asset, auction begin time and auction begin amount.
+     */
+    decodeDutchAuctionData(dutchAuctionData: string): DutchAuctionData {
+        const dutchAuctionDataBuffer = ethUtil.toBuffer(dutchAuctionData);
+        // Decode asset data
+        const dutchAuctionDataLengthInBytes = 64;
+        const assetDataBuffer = dutchAuctionDataBuffer.slice(
+            0,
+            dutchAuctionDataBuffer.byteLength - dutchAuctionDataLengthInBytes,
+        );
+        const assetDataHex = ethUtil.bufferToHex(assetDataBuffer);
+        const assetData = assetDataUtils.decodeAssetDataOrThrow(assetDataHex);
+        // Decode auction details
+        const dutchAuctionDetailsBuffer = dutchAuctionDataBuffer.slice(
+            dutchAuctionDataBuffer.byteLength - dutchAuctionDataLengthInBytes,
+        );
+        const [beginTimeSecondsAsBN, beginAmountAsBN] = ethAbi.rawDecode(
+            ['uint256', 'uint256'],
+            dutchAuctionDetailsBuffer,
+        );
+        const beginTimeSeconds = new BigNumber(beginTimeSecondsAsBN.toString());
+        const beginAmount = new BigNumber(beginAmountAsBN.toString());
+        return {
+            assetData,
+            beginTimeSeconds,
+            beginAmount,
+        };
+    },
+    /**
      * Decode and return the assetProxyId from the assetData
      * @param assetData Hex encoded assetData string to decode
      * @return The assetProxyId
@@ -219,6 +304,7 @@ export const assetDataUtils = {
             assetProxyId !== AssetProxyId.ERC20 &&
             assetProxyId !== AssetProxyId.ERC721 &&
             assetProxyId !== AssetProxyId.ERC1155 &&
+            assetProxyId !== AssetProxyId.StaticCall &&
             assetProxyId !== AssetProxyId.MultiAsset
         ) {
             throw new Error(`Invalid assetProxyId: ${assetProxyId}`);
@@ -254,6 +340,13 @@ export const assetDataUtils = {
         return decodedAssetData.assetProxyId === AssetProxyId.MultiAsset;
     },
     /**
+     * Checks if the decoded asset data is valid StaticCall data
+     * @param decodedAssetData The decoded asset data to check
+     */
+    isStaticCallAssetData(decodedAssetData: SingleAssetData | MultiAssetData): decodedAssetData is StaticCallAssetData {
+        return decodedAssetData.assetProxyId === AssetProxyId.StaticCall;
+    },
+    /**
      * Throws if the length or assetProxyId are invalid for the ERC20Proxy.
      * @param assetData Hex encoded assetData string
      */
@@ -265,6 +358,7 @@ export const assetDataUtils = {
                 }. Got ${assetData.length}`,
             );
         }
+        assetDataUtils.assertWordAlignedAssetData(assetData);
         const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
         if (assetProxyId !== AssetProxyId.ERC20) {
             throw new Error(
@@ -286,6 +380,7 @@ export const assetDataUtils = {
                 }. Got ${assetData.length}`,
             );
         }
+        assetDataUtils.assertWordAlignedAssetData(assetData);
         const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
         if (assetProxyId !== AssetProxyId.ERC721) {
             throw new Error(
@@ -300,8 +395,22 @@ export const assetDataUtils = {
      * @param assetData Hex encoded assetData string
      */
     assertIsERC1155AssetData(assetData: string): void {
-        // If the asset data is correctly decoded then it is valid.
-        assetDataUtils.decodeERC1155AssetData(assetData);
+        if (assetData.length < constants.ERC1155_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX) {
+            throw new Error(
+                `Could not decode ERC1155 Proxy Data. Expected length of encoded data to be at least ${
+                    constants.ERC1155_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX
+                }. Got ${assetData.length}`,
+            );
+        }
+        assetDataUtils.assertWordAlignedAssetData(assetData);
+        const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
+        if (assetProxyId !== AssetProxyId.ERC1155) {
+            throw new Error(
+                `Could not decode ERC1155 assetData. Expected assetProxyId to be ERC1155 (${
+                    AssetProxyId.ERC1155
+                }), but got ${assetProxyId}`,
+            );
+        }
     },
     /**
      * Throws if the length or assetProxyId are invalid for the MultiAssetProxy.
@@ -315,12 +424,47 @@ export const assetDataUtils = {
                 }. Got ${assetData.length}`,
             );
         }
+        assetDataUtils.assertWordAlignedAssetData(assetData);
         const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
         if (assetProxyId !== AssetProxyId.MultiAsset) {
             throw new Error(
                 `Could not decode MultiAsset assetData. Expected assetProxyId to be MultiAsset (${
                     AssetProxyId.MultiAsset
                 }), but got ${assetProxyId}`,
+            );
+        }
+    },
+    /**
+     * Throws if the assetData is not StaticCallData.
+     * @param assetData Hex encoded assetData string
+     */
+    assertIsStaticCallAssetData(assetData: string): void {
+        if (assetData.length < constants.STATIC_CALL_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX) {
+            throw new Error(
+                `Could not decode StaticCall Proxy Data. Expected length of encoded data to be at least ${
+                    constants.STATIC_CALL_ASSET_DATA_MIN_CHAR_LENGTH_WITH_PREFIX
+                }. Got ${assetData.length}`,
+            );
+        }
+        assetDataUtils.assertWordAlignedAssetData(assetData);
+        const assetProxyId = assetDataUtils.decodeAssetProxyId(assetData);
+        if (assetProxyId !== AssetProxyId.StaticCall) {
+            throw new Error(
+                `Could not decode StaticCall assetData. Expected assetProxyId to be StaticCall (${
+                    AssetProxyId.StaticCall
+                }), but got ${assetProxyId}`,
+            );
+        }
+    },
+    /**
+     * Throws if the assetData is not padded to 32 bytes.
+     * @param assetData Hex encoded assetData string
+     */
+    assertWordAlignedAssetData(assetData: string): void {
+        const charsIn32Bytes = 64;
+        if ((assetData.length - constants.SELECTOR_CHAR_LENGTH_WITH_PREFIX) % charsIn32Bytes !== 0) {
+            throw new Error(
+                `assetData must be word aligned. ${(assetData.length - 2) / 2} is not a valid byte length.`,
             );
         }
     },
@@ -343,12 +487,15 @@ export const assetDataUtils = {
             case AssetProxyId.MultiAsset:
                 assetDataUtils.assertIsMultiAssetData(assetData);
                 break;
+            case AssetProxyId.StaticCall:
+                assetDataUtils.assertIsStaticCallAssetData(assetData);
+                break;
             default:
                 throw new Error(`Unrecognized asset proxy id: ${assetProxyId}`);
         }
     },
     /**
-     * Decode any assetData into it's corresponding assetData object
+     * Decode any assetData into its corresponding assetData object
      * @param assetData Hex encoded assetData string to decode
      * @return Either a ERC20, ERC721, ERC1155, or MultiAsset assetData object
      */
@@ -367,8 +514,12 @@ export const assetDataUtils = {
             case AssetProxyId.MultiAsset:
                 const multiAssetData = assetDataUtils.decodeMultiAssetData(assetData);
                 return multiAssetData;
+            case AssetProxyId.StaticCall:
+                const staticCallData = assetDataUtils.decodeStaticCallAssetData(assetData);
+                return staticCallData;
             default:
                 throw new Error(`Unrecognized asset proxy id: ${assetProxyId}`);
         }
     },
 };
+// tslint:disable:max-file-line-count

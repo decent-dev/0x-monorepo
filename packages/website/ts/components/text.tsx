@@ -16,6 +16,7 @@ interface HeadingProps extends BaseTextInterface {
     isFlex?: boolean;
     isNoMargin?: boolean;
     isMuted?: boolean | number;
+    isInline?: boolean;
     marginBottom?: string;
     color?: string;
     children?: React.ReactNode | string;
@@ -31,7 +32,7 @@ interface ParagraphProps extends BaseTextInterface {
 const StyledHeading = styled.h1<HeadingProps>`
     max-width: ${props => props.maxWidth};
     color: ${props => props.color || props.theme.textColor};
-    display: ${props => props.isFlex && `inline-flex`};
+    display: ${props => (props.isFlex ? `inline-flex` : props.isInline ? 'inline' : undefined)};
     align-items: center;
     justify-content: ${props => props.isFlex && `space-between`};
     font-size: ${props =>

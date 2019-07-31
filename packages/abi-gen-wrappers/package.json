@@ -1,6 +1,6 @@
 {
     "name": "@0x/abi-gen-wrappers",
-    "version": "4.3.0",
+    "version": "5.0.3",
     "engines": {
         "node": ">=6.12"
     },
@@ -14,8 +14,10 @@
         "build:ci": "yarn build",
         "lint": "tslint --format stylish --project .",
         "fix": "tslint --fix --format stylish --project .",
-        "pre_build": "yarn generate_contract_wrappers",
-        "clean": "shx rm -rf lib wrappers",
+        "pre_build": "yarn generate_contract_wrappers && yarn prettier_contract_wrappers",
+        "prettier": "prettier --write src/**/* --config ../../.prettierrc",
+        "prettier_contract_wrappers": "prettier --write src/generated-wrappers/* --config ../../.prettierrc",
+        "clean": "shx rm -rf lib src/generated-wrappers",
         "generate_contract_wrappers": "abi-gen --abis  ${npm_package_config_abis} --template ../../node_modules/@0x/abi-gen-templates/contract.handlebars --partials '../../node_modules/@0x/abi-gen-templates/partials/**/*.handlebars' --output src/generated-wrappers --backend ethers"
     },
     "config": {
@@ -31,22 +33,23 @@
     },
     "homepage": "https://github.com/0xProject/0x-monorepo/packages/abi-gen-wrappers/README.md",
     "devDependencies": {
-        "@0x/abi-gen": "^2.0.10",
-        "@0x/abi-gen-templates": "^2.1.0",
-        "@0x/assert": "^2.0.10",
-        "@0x/json-schemas": "^3.0.10",
+        "@0x/abi-gen": "^3.1.1",
+        "@0x/abi-gen-templates": "^2.3.0",
+        "@0x/assert": "^2.1.1",
+        "@0x/json-schemas": "^3.1.11",
         "@0x/tslint-config": "^3.0.1",
-        "@0x/types": "^2.2.2",
-        "@0x/utils": "^4.3.3",
-        "@0x/web3-wrapper": "^6.0.6",
-        "ethereum-types": "^2.1.2",
+        "@0x/types": "^2.4.1",
+        "@0x/utils": "^4.4.1",
+        "@0x/web3-wrapper": "^6.0.8",
+        "ethereum-types": "^2.1.4",
         "ethers": "~4.0.4",
         "lodash": "^4.17.11",
         "shx": "^0.2.2"
     },
     "dependencies": {
-        "@0x/base-contract": "^5.1.0",
-        "@0x/contract-artifacts": "^1.5.1"
+        "@0x/base-contract": "^5.1.2",
+        "@0x/contract-addresses": "^3.0.2",
+        "@0x/contract-artifacts": "^2.0.2"
     },
     "publishConfig": {
         "access": "public"

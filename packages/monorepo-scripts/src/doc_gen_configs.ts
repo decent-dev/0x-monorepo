@@ -25,6 +25,9 @@ export const docGenConfigs: DocGenConfigs = {
             'https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/ganache-core/index.d.ts#L8',
         'lightwallet.keystore':
             'https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/eth-lightwallet/index.d.ts#L36',
+        // HACK: Asset-swapper specifies marketSell and marketBuy quotes with a descriminant MarketOperation Type to ignore the error, linking Buy and Sell to MarketOperation
+        Buy: 'https://github.com/0xProject/0x-monorepo/blob/development/packages/types/src/index.ts',
+        Sell: 'https://github.com/0xProject/0x-monorepo/blob/development/packages/types/src/index.ts',
     },
     // If a 0x package re-exports an external package, we should add a link to it's exported items here
     EXTERNAL_EXPORT_TO_LINK: {
@@ -37,7 +40,7 @@ export const docGenConfigs: DocGenConfigs = {
     // factory method which instantiates an instance of a class, but we don't want users instantiating it themselves
     // and getting confused. Any class name in this list will not have it's constructor rendered in our docs.
     CLASSES_WITH_HIDDEN_CONSTRUCTORS: [
-        'AssetBuyer',
+        'SwapQuoter',
         'CoordinatorWrapper',
         'DutchAuctionWrapper',
         'ERC20ProxyWrapper',
@@ -56,9 +59,12 @@ export const docGenConfigs: DocGenConfigs = {
     IGNORED_EXCESSIVE_TYPES: [
         'NonceSubproviderErrors',
         'Web3WrapperErrors',
+        'AssetBuyerError',
         'ContractWrappersError',
         'TypedDataError',
-        'AssetBuyerError',
+        'SwapQuoterError',
+        'SwapQuoteGetOutputOpts',
+        'SwapQuoteExecutionOpts',
         'ForwarderWrapperError',
         'CoordinatorServerError',
         'CoordinatorServerCancellationResponse',

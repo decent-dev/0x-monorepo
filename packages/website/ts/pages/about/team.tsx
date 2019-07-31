@@ -46,7 +46,7 @@ const team: TeamMember[] = [
     {
         imageUrl: '/images/team/brandonm.jpg',
         name: 'Brandon Millman',
-        title: 'Senior Engineer',
+        title: 'Engineering Manager',
     },
     {
         imageUrl: '/images/team/toms.jpg',
@@ -71,7 +71,7 @@ const team: TeamMember[] = [
     {
         imageUrl: '/images/team/zack.jpg',
         name: 'Zack Skelly',
-        title: 'Lead Recruiter',
+        title: 'Head of Talent',
     },
     {
         imageUrl: '/images/team/remcoB.jpg',
@@ -149,7 +149,7 @@ const team: TeamMember[] = [
         title: 'Technical Sourcer',
     },
     {
-        imageUrl: '/images/team/danielp.png',
+        imageUrl: '/images/team/danielp.jpg',
         name: 'Daniel Pyrathon',
         title: 'Engineer',
     },
@@ -183,33 +183,43 @@ const team: TeamMember[] = [
         name: 'Alex Kroeger',
         title: 'Data Scientist',
     },
+    {
+        imageUrl: '/images/team/theog.jpg',
+        name: 'Theo Gonella',
+        title: 'Product Manager',
+    },
+    {
+        imageUrl: '/images/team/alext.jpg',
+        name: 'Alex Towle',
+        title: 'Engineer',
+    },
 ];
 
 const advisors: TeamMember[] = [
     {
         imageUrl: '/images/team/advisors/frede.jpg',
         name: 'Fred Ehrsam',
-        title: 'Advisor',
+        title: 'Paradigm',
     },
     {
         imageUrl: '/images/team/advisors/olafc.jpg',
         name: 'Olaf Carlson-Wee',
-        title: 'Advisor',
+        title: 'Polychain Capital',
     },
     {
         imageUrl: '/images/team/advisors/joeyk.jpg',
         name: 'Joey Krug',
-        title: 'Advisor',
+        title: 'Pantera Capital, Augur',
     },
     {
         imageUrl: '/images/team/advisors/lindax.jpg',
         name: 'Linda Xie',
-        title: 'Advisor',
+        title: 'Scalar Capital',
     },
     {
         imageUrl: '/images/team/advisors/davids.jpg',
         name: 'David Sacks',
-        title: 'Advisor',
+        title: 'Craft Ventures',
     },
 ];
 
@@ -321,7 +331,7 @@ const Name = styled.h3`
     color: ${colors.textDarkPrimary};
     font-size: 14px;
     line-height: 1;
-    margin: 0;
+    margin: 0 0 3px 0;
 `;
 
 const MemberTitle = styled(Paragraph)`

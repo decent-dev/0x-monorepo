@@ -1,4 +1,4 @@
-import { EventAbi, MethodAbi } from 'ethereum-types';
+import { ContractAbi, EventAbi, MethodAbi } from 'ethereum-types';
 
 export enum ParamKind {
     Input = 'input',
@@ -13,12 +13,13 @@ export enum ContractsBackend {
 export interface Method extends MethodAbi {
     singleReturnValue: boolean;
     hasReturnValue: boolean;
-    tsName: string;
+    languageSpecificName: string;
     functionSignature: string;
 }
 
 export interface ContextData {
     contractName: string;
+    ABI: ContractAbi;
     methods: Method[];
     events: EventAbi[];
 }

@@ -54,6 +54,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('getSignerAddress(bytes32,bytes)');
@@ -61,6 +65,16 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<string>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(hash: string, signature: string): string {
+            assert.isString('hash', hash);
+            assert.isString('signature', signature);
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments('getSignerAddress(bytes32,bytes)', [
+                hash,
+                signature,
+            ]);
+            return abiEncodedTransactionData;
         },
     };
     public getTransactionHash = {
@@ -89,6 +103,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('getTransactionHash((uint256,address,bytes))');
@@ -96,6 +114,14 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<string>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(transaction: { salt: BigNumber; signerAddress: string; data: string }): string {
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments(
+                'getTransactionHash((uint256,address,bytes))',
+                [transaction],
+            );
+            return abiEncodedTransactionData;
         },
     };
     public getCoordinatorApprovalHash = {
@@ -130,6 +156,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('getCoordinatorApprovalHash((address,bytes32,bytes,uint256))');
@@ -137,6 +167,19 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<string>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(approval: {
+            txOrigin: string;
+            transactionHash: string;
+            transactionSignature: string;
+            approvalExpirationTimeSeconds: BigNumber;
+        }): string {
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments(
+                'getCoordinatorApprovalHash((address,bytes32,bytes,uint256))',
+                [approval],
+            );
+            return abiEncodedTransactionData;
         },
     };
     public executeTransaction = {
@@ -155,7 +198,13 @@ export class CoordinatorContract extends BaseContract {
             const self = (this as any) as CoordinatorContract;
             const encodedData = self._strictEncodeArguments(
                 'executeTransaction((uint256,address,bytes),address,bytes,uint256[],bytes[])',
-                [transaction, txOrigin, transactionSignature, approvalExpirationTimeSeconds, approvalSignatures],
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
             );
             const txDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
                 {
@@ -167,12 +216,16 @@ export class CoordinatorContract extends BaseContract {
                 self.executeTransaction.estimateGasAsync.bind(
                     self,
                     transaction,
-                    txOrigin,
+                    txOrigin.toLowerCase(),
                     transactionSignature,
                     approvalExpirationTimeSeconds,
                     approvalSignatures,
                 ),
             );
+            if (txDataWithDefaults.from !== undefined) {
+                txDataWithDefaults.from = txDataWithDefaults.from.toLowerCase();
+            }
+
             const txHash = await self._web3Wrapper.sendTransactionAsync(txDataWithDefaults);
             return txHash;
         },
@@ -193,7 +246,7 @@ export class CoordinatorContract extends BaseContract {
             const self = (this as any) as CoordinatorContract;
             const txHashPromise = self.executeTransaction.sendTransactionAsync(
                 transaction,
-                txOrigin,
+                txOrigin.toLowerCase(),
                 transactionSignature,
                 approvalExpirationTimeSeconds,
                 approvalSignatures,
@@ -226,7 +279,13 @@ export class CoordinatorContract extends BaseContract {
             const self = (this as any) as CoordinatorContract;
             const encodedData = self._strictEncodeArguments(
                 'executeTransaction((uint256,address,bytes),address,bytes,uint256[],bytes[])',
-                [transaction, txOrigin, transactionSignature, approvalExpirationTimeSeconds, approvalSignatures],
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
             );
             const txDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
                 {
@@ -236,26 +295,12 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            if (txDataWithDefaults.from !== undefined) {
+                txDataWithDefaults.from = txDataWithDefaults.from.toLowerCase();
+            }
+
             const gas = await self._web3Wrapper.estimateGasAsync(txDataWithDefaults);
             return gas;
-        },
-        getABIEncodedTransactionData(
-            transaction: { salt: BigNumber; signerAddress: string; data: string },
-            txOrigin: string,
-            transactionSignature: string,
-            approvalExpirationTimeSeconds: BigNumber[],
-            approvalSignatures: string[],
-        ): string {
-            assert.isString('txOrigin', txOrigin);
-            assert.isString('transactionSignature', transactionSignature);
-            assert.isArray('approvalExpirationTimeSeconds', approvalExpirationTimeSeconds);
-            assert.isArray('approvalSignatures', approvalSignatures);
-            const self = (this as any) as CoordinatorContract;
-            const abiEncodedTransactionData = self._strictEncodeArguments(
-                'executeTransaction((uint256,address,bytes),address,bytes,uint256[],bytes[])',
-                [transaction, txOrigin, transactionSignature, approvalExpirationTimeSeconds, approvalSignatures],
-            );
-            return abiEncodedTransactionData;
         },
         async callAsync(
             transaction: { salt: BigNumber; signerAddress: string; data: string },
@@ -281,7 +326,13 @@ export class CoordinatorContract extends BaseContract {
             const self = (this as any) as CoordinatorContract;
             const encodedData = self._strictEncodeArguments(
                 'executeTransaction((uint256,address,bytes),address,bytes,uint256[],bytes[])',
-                [transaction, txOrigin, transactionSignature, approvalExpirationTimeSeconds, approvalSignatures],
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
             );
             const callDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
                 {
@@ -291,6 +342,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder(
@@ -300,6 +355,30 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<void>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(
+            transaction: { salt: BigNumber; signerAddress: string; data: string },
+            txOrigin: string,
+            transactionSignature: string,
+            approvalExpirationTimeSeconds: BigNumber[],
+            approvalSignatures: string[],
+        ): string {
+            assert.isString('txOrigin', txOrigin);
+            assert.isString('transactionSignature', transactionSignature);
+            assert.isArray('approvalExpirationTimeSeconds', approvalExpirationTimeSeconds);
+            assert.isArray('approvalSignatures', approvalSignatures);
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments(
+                'executeTransaction((uint256,address,bytes),address,bytes,uint256[],bytes[])',
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
+            );
+            return abiEncodedTransactionData;
         },
     };
     public EIP712_EXCHANGE_DOMAIN_HASH = {
@@ -322,6 +401,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('EIP712_EXCHANGE_DOMAIN_HASH()');
@@ -329,6 +412,11 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<string>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(): string {
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments('EIP712_EXCHANGE_DOMAIN_HASH()', []);
+            return abiEncodedTransactionData;
         },
     };
     public assertValidCoordinatorApprovals = {
@@ -356,7 +444,13 @@ export class CoordinatorContract extends BaseContract {
             const self = (this as any) as CoordinatorContract;
             const encodedData = self._strictEncodeArguments(
                 'assertValidCoordinatorApprovals((uint256,address,bytes),address,bytes,uint256[],bytes[])',
-                [transaction, txOrigin, transactionSignature, approvalExpirationTimeSeconds, approvalSignatures],
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
             );
             const callDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
                 {
@@ -366,6 +460,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder(
@@ -375,6 +473,30 @@ export class CoordinatorContract extends BaseContract {
             const result = abiEncoder.strictDecodeReturnValue<void>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(
+            transaction: { salt: BigNumber; signerAddress: string; data: string },
+            txOrigin: string,
+            transactionSignature: string,
+            approvalExpirationTimeSeconds: BigNumber[],
+            approvalSignatures: string[],
+        ): string {
+            assert.isString('txOrigin', txOrigin);
+            assert.isString('transactionSignature', transactionSignature);
+            assert.isArray('approvalExpirationTimeSeconds', approvalExpirationTimeSeconds);
+            assert.isArray('approvalSignatures', approvalSignatures);
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments(
+                'assertValidCoordinatorApprovals((uint256,address,bytes),address,bytes,uint256[],bytes[])',
+                [
+                    transaction,
+                    txOrigin.toLowerCase(),
+                    transactionSignature,
+                    approvalExpirationTimeSeconds,
+                    approvalSignatures,
+                ],
+            );
+            return abiEncodedTransactionData;
         },
     };
     public decodeOrdersFromFillData = {
@@ -417,6 +539,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('decodeOrdersFromFillData(bytes)');
@@ -440,6 +566,12 @@ export class CoordinatorContract extends BaseContract {
             // tslint:enable boolean-naming
             return result;
         },
+        getABIEncodedTransactionData(data: string): string {
+            assert.isString('data', data);
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments('decodeOrdersFromFillData(bytes)', [data]);
+            return abiEncodedTransactionData;
+        },
     };
     public EIP712_COORDINATOR_DOMAIN_HASH = {
         async callAsync(callData: Partial<CallData> = {}, defaultBlock?: BlockParam): Promise<string> {
@@ -461,6 +593,10 @@ export class CoordinatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('EIP712_COORDINATOR_DOMAIN_HASH()');
@@ -469,11 +605,17 @@ export class CoordinatorContract extends BaseContract {
             // tslint:enable boolean-naming
             return result;
         },
+        getABIEncodedTransactionData(): string {
+            const self = (this as any) as CoordinatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments('EIP712_COORDINATOR_DOMAIN_HASH()', []);
+            return abiEncodedTransactionData;
+        },
     };
     public static async deployFrom0xArtifactAsync(
         artifact: ContractArtifact | SimpleContractArtifact,
         supportedProvider: SupportedProvider,
         txDefaults: Partial<TxData>,
+        logDecodeDependencies: { [contractName: string]: ContractArtifact | SimpleContractArtifact },
         _exchange: string,
     ): Promise<CoordinatorContract> {
         assert.doesConformToSchema('txDefaults', txDefaults, schemas.txDataSchema, [
@@ -487,13 +629,25 @@ export class CoordinatorContract extends BaseContract {
         const provider = providerUtils.standardizeOrThrow(supportedProvider);
         const bytecode = artifact.compilerOutput.evm.bytecode.object;
         const abi = artifact.compilerOutput.abi;
-        return CoordinatorContract.deployAsync(bytecode, abi, provider, txDefaults, _exchange);
+        const logDecodeDependenciesAbiOnly: { [contractName: string]: ContractAbi } = {};
+        for (const key of Object.keys(logDecodeDependencies)) {
+            logDecodeDependenciesAbiOnly[key] = logDecodeDependencies[key].compilerOutput.abi;
+        }
+        return CoordinatorContract.deployAsync(
+            bytecode,
+            abi,
+            provider,
+            txDefaults,
+            logDecodeDependenciesAbiOnly,
+            _exchange,
+        );
     }
     public static async deployAsync(
         bytecode: string,
         abi: ContractAbi,
         supportedProvider: SupportedProvider,
         txDefaults: Partial<TxData>,
+        logDecodeDependencies: { [contractName: string]: ContractAbi },
         _exchange: string,
     ): Promise<CoordinatorContract> {
         assert.isHexString('bytecode', bytecode);
@@ -523,18 +677,324 @@ export class CoordinatorContract extends BaseContract {
         const txReceipt = await web3Wrapper.awaitTransactionSuccessAsync(txHash);
         logUtils.log(`Coordinator successfully deployed at ${txReceipt.contractAddress}`);
         const contractInstance = new CoordinatorContract(
-            abi,
             txReceipt.contractAddress as string,
             provider,
             txDefaults,
+            logDecodeDependencies,
         );
         contractInstance.constructorArgs = [_exchange];
         return contractInstance;
     }
-    constructor(abi: ContractAbi, address: string, supportedProvider: SupportedProvider, txDefaults?: Partial<TxData>) {
-        super('Coordinator', abi, address, supportedProvider, txDefaults);
-        classUtils.bindAll(this, ['_abiEncoderByFunctionSignature', 'address', 'abi', '_web3Wrapper']);
+
+    /**
+     * @returns      The contract ABI
+     */
+    public static ABI(): ContractAbi {
+        const abi = [
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'hash',
+                        type: 'bytes32',
+                    },
+                    {
+                        name: 'signature',
+                        type: 'bytes',
+                    },
+                ],
+                name: 'getSignerAddress',
+                outputs: [
+                    {
+                        name: 'signerAddress',
+                        type: 'address',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'pure',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'transaction',
+                        type: 'tuple',
+                        components: [
+                            {
+                                name: 'salt',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'signerAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'data',
+                                type: 'bytes',
+                            },
+                        ],
+                    },
+                ],
+                name: 'getTransactionHash',
+                outputs: [
+                    {
+                        name: 'transactionHash',
+                        type: 'bytes32',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'approval',
+                        type: 'tuple',
+                        components: [
+                            {
+                                name: 'txOrigin',
+                                type: 'address',
+                            },
+                            {
+                                name: 'transactionHash',
+                                type: 'bytes32',
+                            },
+                            {
+                                name: 'transactionSignature',
+                                type: 'bytes',
+                            },
+                            {
+                                name: 'approvalExpirationTimeSeconds',
+                                type: 'uint256',
+                            },
+                        ],
+                    },
+                ],
+                name: 'getCoordinatorApprovalHash',
+                outputs: [
+                    {
+                        name: 'approvalHash',
+                        type: 'bytes32',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+            {
+                constant: false,
+                inputs: [
+                    {
+                        name: 'transaction',
+                        type: 'tuple',
+                        components: [
+                            {
+                                name: 'salt',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'signerAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'data',
+                                type: 'bytes',
+                            },
+                        ],
+                    },
+                    {
+                        name: 'txOrigin',
+                        type: 'address',
+                    },
+                    {
+                        name: 'transactionSignature',
+                        type: 'bytes',
+                    },
+                    {
+                        name: 'approvalExpirationTimeSeconds',
+                        type: 'uint256[]',
+                    },
+                    {
+                        name: 'approvalSignatures',
+                        type: 'bytes[]',
+                    },
+                ],
+                name: 'executeTransaction',
+                outputs: [],
+                payable: false,
+                stateMutability: 'nonpayable',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [],
+                name: 'EIP712_EXCHANGE_DOMAIN_HASH',
+                outputs: [
+                    {
+                        name: '',
+                        type: 'bytes32',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'transaction',
+                        type: 'tuple',
+                        components: [
+                            {
+                                name: 'salt',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'signerAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'data',
+                                type: 'bytes',
+                            },
+                        ],
+                    },
+                    {
+                        name: 'txOrigin',
+                        type: 'address',
+                    },
+                    {
+                        name: 'transactionSignature',
+                        type: 'bytes',
+                    },
+                    {
+                        name: 'approvalExpirationTimeSeconds',
+                        type: 'uint256[]',
+                    },
+                    {
+                        name: 'approvalSignatures',
+                        type: 'bytes[]',
+                    },
+                ],
+                name: 'assertValidCoordinatorApprovals',
+                outputs: [],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'data',
+                        type: 'bytes',
+                    },
+                ],
+                name: 'decodeOrdersFromFillData',
+                outputs: [
+                    {
+                        name: 'orders',
+                        type: 'tuple[]',
+                        components: [
+                            {
+                                name: 'makerAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'takerAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'feeRecipientAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'senderAddress',
+                                type: 'address',
+                            },
+                            {
+                                name: 'makerAssetAmount',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'takerAssetAmount',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'makerFee',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'takerFee',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'expirationTimeSeconds',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'salt',
+                                type: 'uint256',
+                            },
+                            {
+                                name: 'makerAssetData',
+                                type: 'bytes',
+                            },
+                            {
+                                name: 'takerAssetData',
+                                type: 'bytes',
+                            },
+                        ],
+                    },
+                ],
+                payable: false,
+                stateMutability: 'pure',
+                type: 'function',
+            },
+            {
+                constant: true,
+                inputs: [],
+                name: 'EIP712_COORDINATOR_DOMAIN_HASH',
+                outputs: [
+                    {
+                        name: '',
+                        type: 'bytes32',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+            {
+                inputs: [
+                    {
+                        name: '_exchange',
+                        type: 'address',
+                    },
+                ],
+                outputs: [],
+                payable: false,
+                stateMutability: 'nonpayable',
+                type: 'constructor',
+            },
+        ] as ContractAbi;
+        return abi;
     }
-} // tslint:disable:max-file-line-count
+    constructor(
+        address: string,
+        supportedProvider: SupportedProvider,
+        txDefaults?: Partial<TxData>,
+        logDecodeDependencies?: { [contractName: string]: ContractAbi },
+    ) {
+        super('Coordinator', CoordinatorContract.ABI(), address, supportedProvider, txDefaults, logDecodeDependencies);
+        classUtils.bindAll(this, ['_abiEncoderByFunctionSignature', 'address', '_web3Wrapper']);
+    }
+}
+
+// tslint:disable:max-file-line-count
 // tslint:enable:no-unbound-method no-parameter-reassignment no-consecutive-blank-lines ordered-imports align
 // tslint:enable:trailing-comma whitespace no-trailing-whitespace

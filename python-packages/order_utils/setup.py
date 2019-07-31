@@ -172,7 +172,7 @@ setup(
         "0x-contract-artifacts",
         "0x-json-schemas",
         "0x-web3",
-        "eth-abi",
+        "eth-abi<2.0.0",
         "eth_utils",
         "hypothesis>=3.31.2",  # HACK! this is web3's dependency!
         # above works around https://github.com/ethereum/web3.py/issues/1179
@@ -229,6 +229,7 @@ setup(
         "build_sphinx": {
             "source_dir": ("setup.py", "src"),
             "build_dir": ("setup.py", "build/docs"),
+            "warning_is_error": ("setup.py", "true"),
         }
     },
 )

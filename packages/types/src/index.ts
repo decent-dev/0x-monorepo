@@ -41,6 +41,11 @@ export interface SignedOrder extends Order {
     signature: string;
 }
 
+export enum MarketOperation {
+    Sell = 'Sell',
+    Buy = 'Buy',
+}
+
 /**
  * ZeroExTransaction for use with 0x Exchange executeTransaction
  */
@@ -164,6 +169,7 @@ export enum AssetProxyId {
     ERC721 = '0x02571792',
     MultiAsset = '0x94cfcdd7',
     ERC1155 = '0xa7cb5fb7',
+    StaticCall = '0xc339d10a',
 }
 
 export interface ERC20AssetData {
@@ -185,6 +191,13 @@ export interface ERC1155AssetData {
     callbackData: string;
 }
 
+export interface StaticCallAssetData {
+    assetProxyId: string;
+    callTarget: string;
+    staticCallData: string;
+    callResultHash: string;
+}
+
 export interface ERC1155AssetDataNoProxyId {
     tokenAddress: string;
     tokenValues: BigNumber[];
@@ -192,14 +205,7 @@ export interface ERC1155AssetDataNoProxyId {
     callbackData: string;
 }
 
-export const ERC1155AssetDataAbi = [
-    { name: 'tokenAddress', type: 'address' },
-    { name: 'tokenIds', type: 'uint256[]' },
-    { name: 'tokenValues', type: 'uint256[]' },
-    { name: 'callbackData', type: 'bytes' },
-];
-
-export type SingleAssetData = ERC20AssetData | ERC721AssetData | ERC1155AssetData;
+export type SingleAssetData = ERC20AssetData | ERC721AssetData | ERC1155AssetData | StaticCallAssetData;
 
 export interface MultiAssetData {
     assetProxyId: string;
@@ -211,6 +217,12 @@ export interface MultiAssetDataWithRecursiveDecoding {
     assetProxyId: string;
     amounts: BigNumber[];
     nestedAssetData: SingleAssetData[];
+}
+
+export interface DutchAuctionData {
+    assetData: AssetData;
+    beginTimeSeconds: BigNumber;
+    beginAmount: BigNumber;
 }
 
 export type AssetData = SingleAssetData | MultiAssetData | MultiAssetDataWithRecursiveDecoding;
@@ -278,6 +290,7 @@ export enum RevertReason {
     WalletError = 'WALLET_ERROR',
     ValidatorError = 'VALIDATOR_ERROR',
     InvalidFunctionSelector = 'INVALID_FUNCTION_SELECTOR',
+    InvalidAssetData = 'INVALID_ASSET_DATA',
     InvalidAssetProxy = 'INVALID_ASSET_PROXY',
     UnregisteredAssetProxy = 'UNREGISTERED_ASSET_PROXY',
     TxFullyConfirmed = 'TX_FULLY_CONFIRMED',
@@ -290,7 +303,7 @@ export enum RevertReason {
     AuctionExpired = 'AUCTION_EXPIRED',
     AuctionNotStarted = 'AUCTION_NOT_STARTED',
     AuctionInvalidBeginTime = 'INVALID_BEGIN_TIME',
-    InvalidAssetData = 'INVALID_ASSET_DATA',
+    InvalidAssetDataEnd = 'INVALID_ASSET_DATA_END',
     // Balance Threshold Filter
     InvalidOrBlockedExchangeSelector = 'INVALID_OR_BLOCKED_EXCHANGE_SELECTOR',
     BalanceQueryFailed = 'BALANCE_QUERY_FAILED',
@@ -316,6 +329,10 @@ export enum RevertReason {
     InvalidValuesOffset = 'INVALID_VALUES_OFFSET',
     InvalidDataOffset = 'INVALID_DATA_OFFSET',
     InvalidAssetDataLength = 'INVALID_ASSET_DATA_LENGTH',
+    // StaticCall
+    InvalidStaticCallDataOffset = 'INVALID_STATIC_CALL_DATA_OFFSET',
+    TargetNotEven = 'TARGET_NOT_EVEN',
+    UnexpectedStaticCallResult = 'UNEXPECTED_STATIC_CALL_RESULT',
 }
 
 export enum StatusCodes {

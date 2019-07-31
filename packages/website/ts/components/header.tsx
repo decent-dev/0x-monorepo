@@ -2,8 +2,7 @@ import * as React from 'react';
 import Headroom from 'react-headroom';
 import MediaQuery from 'react-responsive';
 import styled, { css, withTheme } from 'styled-components';
-
-import { Link } from '@0x/react-shared';
+import { Link } from 'ts/components/documentation/shared/link';
 
 import { Button } from 'ts/components/button';
 import { DropdownProducts } from 'ts/components/dropdowns/dropdown_products';

@@ -1,5 +1,23 @@
 [
     {
+        "timestamp": 1563957393,
+        "version": "2.0.2",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
+        "timestamp": 1563006338,
+        "version": "2.0.1",
+        "changes": [
+            {
+                "note": "Dependencies updated"
+            }
+        ]
+    },
+    {
         "version": "2.0.0",
         "changes": [
             {
@@ -9,8 +27,13 @@
             {
                 "note": "Prune fields from EthBalanceChecker",
                 "pr": 1876
+            },
+            {
+                "note": "Add compilerOutput.devdoc to all artifacts",
+                "pr": "1907"
             }
-        ]
+        ],
+        "timestamp": 1562967251
     },
     {
         "timestamp": 1557507213,

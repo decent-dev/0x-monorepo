@@ -5,6 +5,14 @@ Edit the package's CHANGELOG.json file only.
 
 CHANGELOG
 
+## v3.1.10 - _July 24, 2019_
+
+    * re-export new ethereum-types types, TupleDataItem (#1919)
+
+## v3.1.9 - _July 13, 2019_
+
+    * Dependencies updated
+
 ## v3.1.8 - _May 24, 2019_
 
     * Dependencies updated

@@ -23,7 +23,6 @@ import { assert } from '@0x/assert';
 import * as ethers from 'ethers';
 // tslint:enable:no-unused-variable
 
-
 /* istanbul ignore next */
 // tslint:disable:no-parameter-reassignment
 // tslint:disable-next-line:class-name
@@ -35,8 +34,7 @@ export class IValidatorContract extends BaseContract {
             signature: string,
             callData: Partial<CallData> = {},
             defaultBlock?: BlockParam,
-        ): Promise<boolean
-        > {
+        ): Promise<boolean> {
             assert.isString('hash', hash);
             assert.isString('signerAddress', signerAddress);
             assert.isString('signature', signature);
@@ -48,11 +46,12 @@ export class IValidatorContract extends BaseContract {
             if (defaultBlock !== undefined) {
                 assert.isBlockParam('defaultBlock', defaultBlock);
             }
-            const self = this as any as IValidatorContract;
-            const encodedData = self._strictEncodeArguments('isValidSignature(bytes32,address,bytes)', [hash,
-        signerAddress,
-        signature
-        ]);
+            const self = (this as any) as IValidatorContract;
+            const encodedData = self._strictEncodeArguments('isValidSignature(bytes32,address,bytes)', [
+                hash,
+                signerAddress.toLowerCase(),
+                signature,
+            ]);
             const callDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
                 {
                     to: self.address,
@@ -61,20 +60,36 @@ export class IValidatorContract extends BaseContract {
                 },
                 self._web3Wrapper.getContractDefaults(),
             );
+            callDataWithDefaults.from = callDataWithDefaults.from
+                ? callDataWithDefaults.from.toLowerCase()
+                : callDataWithDefaults.from;
+
             const rawCallResult = await self._web3Wrapper.callAsync(callDataWithDefaults, defaultBlock);
             BaseContract._throwIfRevertWithReasonCallResult(rawCallResult);
             const abiEncoder = self._lookupAbiEncoder('isValidSignature(bytes32,address,bytes)');
             // tslint:disable boolean-naming
-            const result = abiEncoder.strictDecodeReturnValue<boolean
-        >(rawCallResult);
+            const result = abiEncoder.strictDecodeReturnValue<boolean>(rawCallResult);
             // tslint:enable boolean-naming
             return result;
+        },
+        getABIEncodedTransactionData(hash: string, signerAddress: string, signature: string): string {
+            assert.isString('hash', hash);
+            assert.isString('signerAddress', signerAddress);
+            assert.isString('signature', signature);
+            const self = (this as any) as IValidatorContract;
+            const abiEncodedTransactionData = self._strictEncodeArguments('isValidSignature(bytes32,address,bytes)', [
+                hash,
+                signerAddress.toLowerCase(),
+                signature,
+            ]);
+            return abiEncodedTransactionData;
         },
     };
     public static async deployFrom0xArtifactAsync(
         artifact: ContractArtifact | SimpleContractArtifact,
         supportedProvider: SupportedProvider,
         txDefaults: Partial<TxData>,
+        logDecodeDependencies: { [contractName: string]: ContractArtifact | SimpleContractArtifact },
     ): Promise<IValidatorContract> {
         assert.doesConformToSchema('txDefaults', txDefaults, schemas.txDataSchema, [
             schemas.addressSchema,
@@ -87,13 +102,18 @@ export class IValidatorContract extends BaseContract {
         const provider = providerUtils.standardizeOrThrow(supportedProvider);
         const bytecode = artifact.compilerOutput.evm.bytecode.object;
         const abi = artifact.compilerOutput.abi;
-        return IValidatorContract.deployAsync(bytecode, abi, provider, txDefaults, );
+        const logDecodeDependenciesAbiOnly: { [contractName: string]: ContractAbi } = {};
+        for (const key of Object.keys(logDecodeDependencies)) {
+            logDecodeDependenciesAbiOnly[key] = logDecodeDependencies[key].compilerOutput.abi;
+        }
+        return IValidatorContract.deployAsync(bytecode, abi, provider, txDefaults, logDecodeDependenciesAbiOnly);
     }
     public static async deployAsync(
         bytecode: string,
         abi: ContractAbi,
         supportedProvider: SupportedProvider,
         txDefaults: Partial<TxData>,
+        logDecodeDependencies: { [contractName: string]: ContractAbi },
     ): Promise<IValidatorContract> {
         assert.isHexString('bytecode', bytecode);
         assert.doesConformToSchema('txDefaults', txDefaults, schemas.txDataSchema, [
@@ -103,17 +123,13 @@ export class IValidatorContract extends BaseContract {
         ]);
         const provider = providerUtils.standardizeOrThrow(supportedProvider);
         const constructorAbi = BaseContract._lookupConstructorAbi(abi);
-        [] = BaseContract._formatABIDataItemList(
-            constructorAbi.inputs,
-            [],
-            BaseContract._bigNumberToString,
-        );
+        [] = BaseContract._formatABIDataItemList(constructorAbi.inputs, [], BaseContract._bigNumberToString);
         const iface = new ethers.utils.Interface(abi);
         const deployInfo = iface.deployFunction;
         const txData = deployInfo.encode(bytecode, []);
         const web3Wrapper = new Web3Wrapper(provider);
         const txDataWithDefaults = await BaseContract._applyDefaultsToTxDataAsync(
-            {data: txData},
+            { data: txData },
             txDefaults,
             web3Wrapper.estimateGasAsync.bind(web3Wrapper),
         );
@@ -121,14 +137,62 @@ export class IValidatorContract extends BaseContract {
         logUtils.log(`transactionHash: ${txHash}`);
         const txReceipt = await web3Wrapper.awaitTransactionSuccessAsync(txHash);
         logUtils.log(`IValidator successfully deployed at ${txReceipt.contractAddress}`);
-        const contractInstance = new IValidatorContract(abi, txReceipt.contractAddress as string, provider, txDefaults);
+        const contractInstance = new IValidatorContract(
+            txReceipt.contractAddress as string,
+            provider,
+            txDefaults,
+            logDecodeDependencies,
+        );
         contractInstance.constructorArgs = [];
         return contractInstance;
     }
-    constructor(abi: ContractAbi, address: string, supportedProvider: SupportedProvider, txDefaults?: Partial<TxData>) {
-        super('IValidator', abi, address, supportedProvider, txDefaults);
-        classUtils.bindAll(this, ['_abiEncoderByFunctionSignature', 'address', 'abi', '_web3Wrapper']);
+
+    /**
+     * @returns      The contract ABI
+     */
+    public static ABI(): ContractAbi {
+        const abi = [
+            {
+                constant: true,
+                inputs: [
+                    {
+                        name: 'hash',
+                        type: 'bytes32',
+                    },
+                    {
+                        name: 'signerAddress',
+                        type: 'address',
+                    },
+                    {
+                        name: 'signature',
+                        type: 'bytes',
+                    },
+                ],
+                name: 'isValidSignature',
+                outputs: [
+                    {
+                        name: 'isValid',
+                        type: 'bool',
+                    },
+                ],
+                payable: false,
+                stateMutability: 'view',
+                type: 'function',
+            },
+        ] as ContractAbi;
+        return abi;
     }
-} // tslint:disable:max-file-line-count
+    constructor(
+        address: string,
+        supportedProvider: SupportedProvider,
+        txDefaults?: Partial<TxData>,
+        logDecodeDependencies?: { [contractName: string]: ContractAbi },
+    ) {
+        super('IValidator', IValidatorContract.ABI(), address, supportedProvider, txDefaults, logDecodeDependencies);
+        classUtils.bindAll(this, ['_abiEncoderByFunctionSignature', 'address', '_web3Wrapper']);
+    }
+}
+
+// tslint:disable:max-file-line-count
 // tslint:enable:no-unbound-method no-parameter-reassignment no-consecutive-blank-lines ordered-imports align
 // tslint:enable:trailing-comma whitespace no-trailing-whitespace

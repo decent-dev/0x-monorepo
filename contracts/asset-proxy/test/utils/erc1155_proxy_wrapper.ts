@@ -36,11 +36,7 @@ export class ERC1155ProxyWrapper {
         const allArtifacts = _.merge(artifacts, erc1155Artifacts);
         this._logDecoder = new LogDecoder(this._web3Wrapper, allArtifacts);
         this._dummyTokenWrappers = [];
-        this._assetProxyInterface = new IAssetProxyContract(
-            artifacts.IAssetProxy.compilerOutput.abi,
-            constants.NULL_ADDRESS,
-            provider,
-        );
+        this._assetProxyInterface = new IAssetProxyContract(constants.NULL_ADDRESS, provider);
         this._tokenOwnerAddresses = tokenOwnerAddresses;
         this._contractOwnerAddress = contractOwnerAddress;
         this._fungibleTokenIds = [];
@@ -58,6 +54,7 @@ export class ERC1155ProxyWrapper {
                 erc1155Artifacts.ERC1155Mintable,
                 this._provider,
                 txDefaults,
+                artifacts,
             );
             const erc1155Wrapper = new Erc1155Wrapper(erc1155Contract, this._provider, this._contractOwnerAddress);
             this._dummyTokenWrappers.push(erc1155Wrapper);
@@ -73,6 +70,7 @@ export class ERC1155ProxyWrapper {
             artifacts.ERC1155Proxy,
             this._provider,
             txDefaults,
+            artifacts,
         );
         this._proxyIdIfExists = await this._proxyContract.getProxyId.callAsync();
         return this._proxyContract;

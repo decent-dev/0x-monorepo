@@ -5,6 +5,14 @@ Edit the package's CHANGELOG.json file only.
 
 CHANGELOG
 
+## v4.4.1 - _July 24, 2019_
+
+    * Dependencies updated
+
+## v4.4.0 - _July 13, 2019_
+
+    * Add function deleteNestedProperty (#1842)
+
 ## v4.3.3 - _May 10, 2019_
 
     * Fixed spelling error in ABI Encoder error message (#1808)
