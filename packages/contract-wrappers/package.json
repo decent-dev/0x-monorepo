@@ -40,7 +40,7 @@
         "node": ">=6.0.0"
     },
     "devDependencies": {
-        "@0x/ts-doc-gen": "^0.0.6",
+        "@0x/ts-doc-gen": "^0.0.7",
         "@0x/contracts-test-utils": "^3.1.12",
         "@0x/coordinator-server": "0.1.1",
         "@0x/dev-utils": "^2.2.6",
