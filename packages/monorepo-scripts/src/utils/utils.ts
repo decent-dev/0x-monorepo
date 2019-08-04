@@ -77,7 +77,7 @@ export const utils = {
     },
     async getLernaUpdatedPackagesAsync(shouldIncludePrivate: boolean): Promise<UpdatedPackage[]> {
         try {
-            const result = await execAsync(`${constants.lernaExecutable} updated --json`, {
+            const result = await execAsync(`${constants.lernaExecutable} changed --json --all`, {
                 cwd: constants.monorepoRootPath,
             });
             if (result.stdout === '') {
