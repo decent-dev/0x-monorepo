@@ -36,7 +36,7 @@
         "node": ">=6.0.0"
     },
     "devDependencies": {
-        "@0x/ts-doc-gen": "^0.0.7",
+        "@0x/ts-doc-gen": "0.0.7",
         "@0x/dev-utils": "^2.2.6",
         "@0x/migrations": "^4.1.11",
         "@0x/subproviders": "^5.0.0",
